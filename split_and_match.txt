@@ -1,0 +1,17 @@
+
+
+I)Introduction
+--------------
+
+** style transfer difficile, mélange de différentes procédures (transfer color, texture synthesis, inpainting, super-résolution)
+
+** les patchs doivent être large pour avoir le style de l'image mais assez petite aussi pour éviter des structures de l'image
+
+** transfer style = transfer local de texture + transfer global de couleur
+
+** 2 approche pour texture:
+     + glouton
+     + iteratif
+
+** solution MAP (maximum a posteriori)
+
