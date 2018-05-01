@@ -1,7 +1,8 @@
-
-
-I)Introduction
---------------
+					------------------------
+					| Résumer de l'article |
+					------------------------
+I) Introduction
+---------------
 
 ** style transfer difficile, mélange de différentes procédures (transfer color, texture synthesis, inpainting, super-résolution)
 
@@ -14,4 +15,49 @@ I)Introduction
      + iteratif
 
 ** solution MAP (maximum a posteriori)
+
+II) Travaux connexes
+--------------------
+
+** texture transfer => cas special de synthèse de texture
+
+** la synthese de texture par échantillonage non paramétrique est inspiré du model Markov du language naturel
+
+** 2 approche pour calculer les échantillonnages non-paramétrique basé sur Markov Random Field (MRF)
+
+   *** strategie "greedy" (glouton)
+       ++ minimisation de foncion de cout heuristique
+       ++ travaillant sur le voisinage des échantillons pour obtenir une solution local
+
+   *** startegie "iterative" (utilisé dans cette article)
+       ++ consider la probabilité de densité du model sur le probleme
+       ++ calcule une approximation de la solution par maximum a posteriori (MAP)
+       ++ optimization "Loopy Belief Propagation" ou "Graphs cuts"
+
+** Style transfer 2 façons
+
+   *** Supervisé (probleme sur le calcule d'image analogie) A : A' :: B : B'
+       ++ pixel synthétisé dans B' est directement sélectionné depuis le style de A' par minimisation de function de cout qui prend en compte la similarité entre A et B et préservation des voisins locaux dans A'.
+       ++ probleme de la cohérence temporelle (récemment accélerer par une table de hashage)
+       ++ Besion d'enregistrer une paire d'image d'exemple (dur a avoir en pratique)
+
+   *** Non Supervisé (utilisé dans l'article)
+       ++ Peu de travaux réaliser sur l'approche "non supervisé"
+       ++ seulement A' et B sont nécessaire pour cette approche
+       ++ 21 utilise une approche bayésienne pour aobtenir la solution la plus probable, se base aussi sur MRF
+       ++ 27 decompose les images en trois composantes additives ( draft, paint and edge )
+       ++ Dans cette article pas de décomposition d'images
+       ++ Dans 21 et 27 ils utilisent MRF sur une grille régulière
+       ++ Dans cette article MRF sur grille adaptatif
+
+** Autre façons
+
+   *** 13 utilise  "Convolutional Neural Network" (CNN) pour séparer et recombiner le contenu et le style
+       ++ utilisation d'une architecture de réseau neuronal pré-défini et une descente de gradient pour effectué la reconstruction de style
+
+
+III) Split and Match Style Transfer
+-----------------------------------
+
+ 
 
