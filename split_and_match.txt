@@ -59,5 +59,64 @@ II) Travaux connexes
 III) Split and Match Style Transfer
 -----------------------------------
 
- 
+** image composé de:
+   ++ structures ( ensembles de primitives visibles ) => sketchable
+   ++ textures ( ensembles de primitives non visibles ) => non-sketchable
 
+** details scene qui correspond géométrie (sketchebale) pinceau fin
+
+** non-sketchable gros pinceau
+
+** adaptation similaire que la synthèse de style
+
+** transfer de style basé sur le voisinnage local d'une grille éguliere
+
+** si grille trop petite => bonne reconstruction image source mais style de l'image exemple pas reconnaisable
+
+** si trop grande => géometrie image source pas reconnaisable et bon transfert de texture de l'image exemple
+
+
+A) Definition problème (unsupervised style transfer)
+---------------------------------------------------
+
+** capture le style de l'image exemple tout en préservant la géométrie de la source
+
+** voisinnage depend de la géométrie du contenu de la source
+
+** 4 sous problème:
+
+   ++ split and match: calculer les partitons adaptatives (quadtree)
+   ++ optimisation: chercher la fonction la plus optimal de correspondance (phi)
+   ++ mélange bilinéaire entre voisinnage et reconstruction û (seulement sur la luminance Y de YUV ??L de LMS??)
+   ++ transfer color
+
+
+B) Split and Match
+------------------
+
+** decomposition de l'image en partition => impact considerable sur la synthese de style
+
+** algorithme:
+   ++ critere d'arret dépend de la similarité entre source et exemple et de la variance local
+   ++ recursif par de l'image entier puis la decompose au fûr et à mesure
+   ++ pas de division alors calcule meilleur correspondance dans v
+
+
+C) Markov Random Fields modeling
+--------------------------------
+
+
+
+D) Bilinear blending
+--------------------
+
+E) transfer color
+-----------------
+
+
+IV) Expériences
+---------------
+
+
+V) Conclusion
+-------------
