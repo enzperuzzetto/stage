@@ -1,17 +1,17 @@
-ROOT=../bcl
+ROOT=../../bcl
 
-CPPFLAGS = -I. -I$(ROOT)/include 
+CPPFLAGS = -I$(ROOT)/include
 CFLAGS   = -Wall -Wextra -Werror -pedantic -std=c99
 LDFLAGS  = -L$(ROOT)/lib 
 LDLIBS   = -lbcl -lm
 
 BIN=\
-	analogy
+	yiq\
+	pyramid_gaussian
 
 .PHONY: all
 all: $(OBJ) $(BIN)
 
-analogy: search_structures.o features.o pyramid.o
 
 .PHONY: clean cleanall
 clean:

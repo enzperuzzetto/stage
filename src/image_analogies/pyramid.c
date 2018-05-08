@@ -1,21 +1,15 @@
-#include <float.h>
-#include <math.h>
-#include <stdio.h>
 #include <stdlib.h>
-
+#include <math.h>
+#include <pnm.h>
 #include <bcl.h>
 
-#define A 0.40
+#include <pyramid.h>
 
-float GAUSS[5] = { 0.25-A/2.0, 0.25, A, 0.25, 0.25-A/2.0 };
 
-void
-process(char *ims_name, int level)
+
+pnm
+pyramidGaussien(int cols, int rows, float* input, int level)
 {
-  pnm ims = pnm_load(ims_name);
-  int cols = pnm_get_width(ims);
-  int rows = pnm_get_height(ims);
-
   int N =(int) powf(2.0, (float)level);
   int cols_t = cols/(float)N;
   int rows_t = rows/(float)N;
@@ -81,29 +75,10 @@ process(char *ims_name, int level)
     free(in);
   }
 
-  pnm_save(imd, PnmRawPpm, "reduce.ppm");  
-
   free(output);
   free(out);
   free(tmp1);
   free(tmp);
-  pnm_free(ims);
-  pnm_free(imd);
-}
   
-
-
-
-void
-usage (char *s){
-  fprintf(stderr, "Usage: %s <ims> <level> \n", s);
-  exit(EXIT_FAILURE);
-}
-
-#define PARAM 2
-int
-main(int argc, char *argv[]){
-  if (argc != PARAM+1) usage(argv[0]);
-  process(argv[1], atoi(argv[2]));
-  return EXIT_SUCCESS;
+  return imd;  
 }
