@@ -1,0 +1,124 @@
+			Analogy image
+			-------------
+
+I) Abstract
+-----------
+
+** 2 phase
+   ++ design phase: pair d'image A et A' comme donnée d'entrainemment
+   ++ application phase: appliquer l'apprentissage sur l'image B => créer une "analougous image"
+
+** inspiré par une simple multi-echelle autorégréssion
+
+** supporte differents types de filtres
+   ++ filtre traditionnel d'image
+   ++ synthèse de texture amélioré par rapport à super-resolution
+   ++ transfers de texture
+   ++ filtre artistic
+   ++ texture-by-numbers
+
+II) Introduction
+----------------
+
+** analogy: n. A systematic comparison between structures
+that uses properties of and relations between objects of
+a source structure to infer properties of and relations be-
+tween objects of a target structure. [14]
+
+A native talent for perceiving analogies is . . . the leading
+fact in genius of every order.
+
+—William James, 1890 [28]
+
+** analogie est la base de résolution des problèmes (première chose que l'homme fait pour résoudre)
+
+** plus facile à utilisé que de trouver le bon filtre qui fera se résultat
+   => Bémole si pas d'image d'exemple on ne peut pas avoir se que l'on veut
+
+** devrait être capable d'apprendre des filtre complex et non-linèaire
+
+** Même procéder pour tout les filtres
+
+** point crucial: la bonne similarité des mesures autrement dit la bonne correspondance entre les pixels
+   => surtout entre A A' et B B'
+
+** quelque chose de métrique capable de préserver l'image original
+
+** pas évident de choisir le bon domaine de couleur
+   => transformation peut interférer sur le résultat
+
+** basé sur les statistique de similarité comme sur l'approximation de Markov random field model
+
+** trouvé un moyen d'indéxer et de rechercher rapidement  les parties de A et A' qui ont des statistiques similaire à B et B' pour la synthèse de B'
+
+** utilise une auto-régression inspiré de Wei and Levoy et de Ashikhmin
+
+** utilise la luminance car les images A et B peuvent avoir des couleurs totalement différent
+
+** vision de l'application est de stocker dans une bibliothèque différents type de style pour pouvoir par la suite être utilisé par un utilisateur lambda
+
+** évidemment ne peut pas marcher correctement avec tout les filtres juste avec l'apprentissage de une paire d'image,
+mais résultat ont été assez surprenant de voir un assez bon fonctionnement sur différents proccéder
+
+** proccéder dit dans l'abstract
+
+** résultat peut dépendre de A et A' pour les filtres mais pas pour la synthése de texture ou le transfer
+
+III) Travaux connexes
+---------------------
+
+
+IV) Image analogies
+-------------------
+
+A) Definitions et structure de données
+--------------------------------------
+
+** en entrée 3 images A A' et B
+
+** sortie B'
+
+** pixel p est le même que A et A'
+
+** pixel q est le meême que B et B'
+
+** pas que RGB mais aussi luminance et filtre varié
+
+** tout ses canaux representes feature vector
+
+** les features de A et B pas forcément que A' et B'
+
+** besoin de garder la correspondance trouver entre p et q dans un tableau s
+
+** 5 tableau pour chaque niveau de résolution
+
+** L niveau maximum de la plus grande résolution
+
+
+B) Algorithme
+-------------
+
+** initialisation des pyramide gaussian des image A A' et B
+
+** la partie principale de l'algorithme est BestMatch
+
+** 2 différentes approches pour trouver la meilleur correspondance
+   ++ approximate search => ANN
+   ++ coherence search => Ashikhmin
+
+** coherence search ne retourne pas la meilleur similarité entre pixel en terme de statistique
+
+** L2-norm (distance euclidienne)
+
+** Fl(p)
+
+
+
+def texture:
+    La première est déterministe et fait référence à une répétition spatiale d'un 
+motif de base dans différentes directions. Cette approche structurelle 
+correspond à une vision macroscopique des textures. C'est le cas, par exemple, des tissus ou de la peau de reptiles (la primitive dans ce cas est l'écaille). Ainsi, B.Julesz, dès 1962, considère la texture comme l'agencement d'un motif de base qu'il appelle «texton» [JULE62].
+
+La deuxième est probabiliste et cherche à caractériser l'aspect anarchique et homogène qui ne comprend ni de motif localisable, ni de fréquence de répétition  principale (de l'herbe). Elle correspond à une vision microscopique.
+
+https://hal.archives-ouvertes.fr/hal-00706168/document
