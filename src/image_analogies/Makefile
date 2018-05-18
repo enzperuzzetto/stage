@@ -11,8 +11,6 @@ BIN=\
 .PHONY: all
 all: $(OBJ) $(BIN)
 
-analogy: search_structures.o features.o pyramid.o
-
 .PHONY: clean cleanall
 clean:
 	$(RM) *.o *~ *.ppm

@@ -54,10 +54,12 @@ process(char *ims_name)
 
   multiple(cols, rows, RGB2YIQ, tmp, out);
 
+  multiple(cols, rows, YIQ2RGB, out, tmp);
+
   float value;
   for(int j=0; j<3*cols; j++){
     for(int i=0; i<rows; i++){
-      value = out[i*3*cols+j];
+      value = tmp[i*3*cols+j];
       if( value > 255)
 	value = 255;
       else if(value < 0)
