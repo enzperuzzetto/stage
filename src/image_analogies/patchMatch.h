@@ -21,7 +21,7 @@ initialisation(int cols_s, int rows_s, int cols_t, int rows_t);
  * @Param
  **/
 int
-iteration();
+iteration(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* target_filter, int l, int q, int* nnf);
 
 /**
  * @brief
@@ -29,7 +29,7 @@ iteration();
  * @Param
  **/
 int
-search();
+search(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* target_filter, int l, int q, int* nnf);
 
 /**
  * @brief
@@ -37,7 +37,7 @@ search();
  * @Param
  **/
 int
-propagation();
+propagation(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* target_filter, int l, int q, int* nnf);
 
 /**
  * @brief
@@ -45,12 +45,12 @@ propagation();
  * @Param
  **/
 int
-patchMatch( int cols_s,
-	    int cols_t,
-	    Pyramid* source,
+patchMatch( Pyramid* source,
 	    Pyramid* source_filter,
-	    int cols_t,
-	    int rows_t,
 	    Pyramid* target,
 	    Pyramid* target_filter,
+	    int l,
 	    int q);
+
+
+#endif
