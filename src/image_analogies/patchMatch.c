@@ -1,6 +1,6 @@
-#include <patchMatch.h>
+#include "patchMatch.h"
 
-int
+int*
 initialisation(int cols_s, int rows_s, int cols_t, int rows_t)
 {
   int* nnf = malloc(sizeof(int) * cols_t * rows_t);
@@ -15,7 +15,7 @@ initialisation(int cols_s, int rows_s, int cols_t, int rows_t)
 int
 iteration(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* target_filter, int l, int q, int* nnf)
 {
-   int pixelTarget = propagation(source, source_filter, target, target_filter, l, q, nnf);
+  int pixelTarget = propagation(source, source_filter, target, target_filter, l, q, nnf);
   int pixelSource = search(source, source_filter, target, target_filter, l, pixelTarget, nnf);
 
   return pixelSource;
@@ -24,7 +24,7 @@ iteration(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* tar
 int
 search(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* target_filter, int l, int q, int* nnf)
 {
-   int w = max(source[l].cols, source[l].rows), pixel_x = 0, pixel_y = 0, pixel = 0, pixel_min = nnf[q], i = 0;
+  int w = max(source[l].cols, source[l].rows), pixel_x = 0, pixel_y = 0, pixel = 0, pixel_min = nnf[q], i = 0;
   float dist_min = dist(pixel_min, source, source_filter, q, target, target_filter, l), d = 0.0, alpha = powf(ALPHA, i), x = 0.0, y = 0.0;
 
   while( w*alpha > 1){
@@ -57,7 +57,7 @@ search(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* target
 int
 propagation(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* target_filter, int l, int q, int* nnf)
 {
-   int pixel_min = q;
+  int pixel_min = q;
   float dist_min = dist(nnf[pixel_min], source, source_filter, q, target, target_filter, l);
 
   int left = q - 1;

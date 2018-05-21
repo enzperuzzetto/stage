@@ -1,4 +1,4 @@
-#include <BestMatch.h>
+#include "BestMatch.h"
 
 
 int
@@ -72,12 +72,10 @@ bestCoherenceMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyr
 int
 bestMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* target_filter, int l, int q)
 {
-  //int p_brute = bruteForceMatch(source, source_filter, target, target_filter, l, q);
+#if 0
   int p_patch = patchMatch(source, source_filter, target, target_filter, l, q);
   int p_coh = bestCoherenceMatch(source, source_filter, target, target_filter, l, q);
   
-
-  //float dist_brute = dist(p_brute, source, source_filter, q, target, target_filter, l);
   float dist_patch = dist(p_patch, source, source_filter, q, target, target_filter, l);
   dist_patch *= dist_patch;
   float dist_coh = dist(p_coh, source, source_filter, q, target, target_filter, l);
@@ -87,5 +85,35 @@ bestMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* tar
     return p_coh;
   else
   return p_patch;
-  //return p_brute;
+#endif
+  
+#if 1
+  int p_brute = bruteForceMatch(source, source_filter, target, target_filter, l, q);
+  int p_coh = bestCoherenceMatch(source, source_filter, target, target_filter, l, q);
+
+  float dist_brute = dist(p_brute, source, source_filter, q, target, target_filter, l);
+  dist_brute *= dist_brute;
+  float dist_coh = dist(p_coh, source, source_filter, q, target, target_filter, l);
+  dist_coh *= dist_coh;
+
+  if(dist_coh < dist_brute * ( 1 + powf(2, l-L)*K) )
+    return p_coh;
+  else
+  return p_brute;
+#endif
+
+#if 0
+   int p_patch = patchMatch(source, source_filter, target, target_filter, l, q);
+   return p_patch;
+#endif
+
+#if 0
+   int p_coh = bestCoherenceMatch(source, source_filter, target, target_filter, l, q);
+   return p_coh;
+#endif
+
+#if 0
+   int p_brute = bruteForceMatch(source, source_filter, target, target_filter, l, q);
+   return p_brute;
+#endif
 }

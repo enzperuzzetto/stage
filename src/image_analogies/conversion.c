@@ -1,4 +1,18 @@
-#include <conversion.h>
+#include <stdlib.h>
+
+#include "conversion.h"
+
+float RGB2YIQ[3][3] = {
+  { 0.299, 0.587, 0.114 },
+  { 0.595716, -0.274453, -0.321263 },
+  { 0.211456, -0.522591, 0.311135 }
+};
+
+float YIQ2RGB[3][3] = {
+  { 1.0, 0.9563, 0.6210 },
+  { 1.0, -0.2721, -0.6474 },
+  { 1.0, -1.1070, 1.7046 }
+};
 
 float*
 convertUnsignedShort2Float(unsigned short* in, int cols, int rows)

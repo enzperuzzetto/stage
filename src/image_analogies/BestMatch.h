@@ -2,12 +2,20 @@
 
 #define __BESTMATCH_H__
 
-#include <patchMatch.h>
+#include "patchMatch.h"
+
+#define NEIGHBOOR_SIZE_COARSER 5
+#define NEIGHBOOR_SIZE_FINER 11
+#define K 0.1
+#define L 3
+
 
 /**
- * @brief
+ * @brief Recherche correspondance du pixel q par brute force
  *
- * @Param
+ * @Param source, source_filter, target, target_filter: A A' B B'
+ *        l: niveau de la pyramid
+ *        q: pixel de B et B'
  **/
 int
 bruteForceMatch(Pyramid* source,
@@ -18,9 +26,11 @@ bruteForceMatch(Pyramid* source,
 		int q);
 
 /**
- * @brief
+ * @brief Recherche de la meilleur coherence du pixel q
  *
- * @Param
+ * @Param source, source_filter, target, target_filter: A A' B B'
+ *        l: niveau de la pyramid
+ *        q: pixel de B et B'
  **/
 int
 bestCoherenceMatch(Pyramid* source,
@@ -31,9 +41,12 @@ bestCoherenceMatch(Pyramid* source,
 		   int q);
 
 /**
- * @brief
+ * @brief Permet de trouver la meilleur correspondance du pixel q
+ *        PatchMatch/Coherence soit BruteForce/Coherence
  *
- * @Param
+ * @Param source, source_filter, target, target_filter: A A' B B'
+ *        l: niveau de la pyramid
+ *        q: pixel de B et B'
  **/
 int
 bestMatch(Pyramid* source,
