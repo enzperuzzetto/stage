@@ -2,14 +2,14 @@ ROOT=../bcl
 
 CC = gcc
 CPPFLAGS = -I. -I$(ROOT)/include 
-CFLAGS   = -Wall -Wextra -Werror -pedantic -std=c99 -g
+CFLAGS   = -Wall -Wextra -Werror -pedantic -std=c99
 LDFLAGS  = -L$(ROOT)/lib 
 LDLIBS   = -lbcl -lm
 
 BIN=\
-	analogy
+	split_match
 
-analogy : features.o pyramid.o conversion.o patchMatch.o BestMatch.o main.o
+analogy : main.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 %.o:%.c
 	$(CC) $(CFLAGS) -c  $< -I../bcl/include

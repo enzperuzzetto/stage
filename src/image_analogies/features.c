@@ -15,7 +15,7 @@ mean(int cols, int rows, float* in, int index, int size, int half)
       j_p1 = j - size/2.0;
       pixel = index + (i_p1*cols+j_p1);
 
-      if(half && pixel == index)
+      if(half && (pixel == index))
 	break;
 
       if(pixel >= 0 && pixel < rows*cols){
@@ -23,9 +23,14 @@ mean(int cols, int rows, float* in, int index, int size, int half)
 	k++;
       }
     }
-  }
 
-  mean /= (float)k;
+    if(half && (pixel == index))
+	break;
+  }
+  if(k==0)
+    mean = 0.0;
+  else
+    mean /= (float)k;
   
   return mean;
 }
@@ -50,9 +55,14 @@ variance(int cols, int rows, float* in, float mean, int index, int size, int hal
 	k++;
       }
     }
+    if(half && (pixel == index))
+	break;
   }
-   
-  var /= (float)k;
+
+  if(k == 0)
+    var = 0.0;
+  else
+    var /= (float)k;
   
   return var;
 }

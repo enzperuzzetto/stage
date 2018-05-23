@@ -23,6 +23,7 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
 
   pnm imt_filter = pnm_new(cols_t, rows_t, PnmRawPpm);
 
+  
   //*********** covert RGB to YIQ ***************//
   
   printf("Convertion en YIQ\n");
@@ -54,6 +55,7 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
   Pyramid* source_filter = init_pyramid(cols_s, rows_s, 0);
   Pyramid* target = init_pyramid(cols_t, rows_t, 0);
   Pyramid* target_filter = init_pyramid(cols_t, rows_t, 1);
+
     
   for(int l=0; l<L; l++){
     printf("Début level %d\n",l);
@@ -80,12 +82,15 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
       target_filter[l].data = pyramid_level(cols_t, rows_t, data_target_filter, L-1-l);
     }
     //************* Compute Features Means & standard deviation **************************
-      
+    
     mean_img(source[l].cols, source[l].rows, source[l].data, source[l].mean, NEIGHBOOR_SIZE_FINER, 0);
+    mean_img(source_filter[l].cols, source_filter[l].rows, source_filter[l].data, source_filter[l].mean, NEIGHBOOR_SIZE_FINER, 1);
     mean_img(target[l].cols, target[l].rows, target[l].data, target[l].mean, NEIGHBOOR_SIZE_FINER, 0);      
-      
+    
     sd_img(source[l].cols, source[l].rows, source[l].data, source[l].mean, source[l].sd, NEIGHBOOR_SIZE_FINER, 0);
+    sd_img(source_filter[l].cols, source_filter[l].rows, source_filter[l].data, source_filter[l].mean, source_filter[l].sd, NEIGHBOOR_SIZE_FINER, 1);
     sd_img(target[l].cols, target[l].rows, target[l].data, target[l].mean, target[l].sd, NEIGHBOOR_SIZE_FINER, 0);
+
       
     //*********** Compute feature l-1 with neighboor size coarser ***********************// 
     if( l > 0){
@@ -102,22 +107,20 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
   
     //************* Best Match   **********************************************************
 
-    int p = 0, q = 0;
+    int p, q;
 
     for(int i=0; i<target_filter[l].rows; i++){
       for(int j=0; j<target_filter[l].cols; j++){
 
-	//compute mean & sd to q in A' and B'
 	q = i*target_filter[l].cols+j;
-
-	source_filter[l].mean[q] = mean(source_filter[l].cols, source_filter[l].rows, source_filter[l].data, q, NEIGHBOOR_SIZE_FINER, 1);
-	source_filter[l].sd[q] = standard_deviation(source_filter[l].cols, source_filter[l].rows, source_filter[l].data, source_filter[l].mean[q], q, NEIGHBOOR_SIZE_FINER, 1);
 	        
 	target_filter[l].mean[q] = mean(target_filter[l].cols, target_filter[l].rows, target_filter[l].data, q, NEIGHBOOR_SIZE_FINER, 1);
 	target_filter[l].sd[q] = standard_deviation(target_filter[l].cols, target_filter[l].rows, target_filter[l].data, target_filter[l].mean[q], q, NEIGHBOOR_SIZE_FINER, 1);
-	      
+	
 	p = bestMatch(source, source_filter, target, target_filter, l, q);
-	 
+
+	
+
 	target_filter[l].data[q] = source_filter[l].data[p];
 	target_filter[l].s[q] = p;
       }
@@ -131,10 +134,28 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
   printf("Convertion en RGB\n");
        
   //************* Copy I & Q B to B' ************************************//
-    
+#if 1
   float* it = channel(cols_t, rows_t, t_yiq, 1);
   float* qt = channel(cols_t, rows_t, t_yiq, 2);
+#endif
+  
+#if 0 //transfer de couleur
+  float* isf = channel(cols_s, rows_s, sf_yiq, 1);
+  float* qsf = channel(cols_s, rows_s, sf_yiq, 2);
 
+  float* it = malloc(sizeof(float) * cols_t * rows_t);
+  float* qt = malloc(sizeof(float) * cols_t * rows_t);
+
+  int pixel = 0;
+  for(int i=0; i<rows_t; i++){
+    for(int j=0; j<cols_t; j++){
+      pixel = target_filter[L-1].s[i*cols_t+j];
+      it[i*cols_t+j] = isf[pixel];
+      qt[i*cols_t+j] = qsf[pixel];
+    }
+  }
+#endif
+  
   float* yiq = putChannel(cols_t, rows_t, target_filter[L-1].data, it, qt);
 
   float* rgb = convertYIQ2RGB(cols_t, rows_t, yiq);

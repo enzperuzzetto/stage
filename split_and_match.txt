@@ -87,7 +87,7 @@ A) Definition problème (unsupervised style transfer)
 
    ++ split and match: calculer les partitons adaptatives (quadtree)
    ++ optimisation: chercher la fonction la plus optimal de correspondance (phi)
-   ++ mélange bilinéaire entre voisinnage et reconstruction û (seulement sur la luminance Y de YUV ??L de LMS??)
+   ++ mélange bilinéaire entre voisinnage et reconstruction û (seulement sur la luminance Y de YUV )
    ++ transfer color
 
 

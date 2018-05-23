@@ -1,4 +1,5 @@
 #include "BestMatch.h"
+#include<stdio.h>
 
 
 int
@@ -6,28 +7,32 @@ bruteForceMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyrami
 {
   int index_min = 0;
   int pixel = 0;
-  float dist_min = dist(0, source, source_filter, q, target, target_filter, l);
+  float dist_min = 0.0;
+  dist_min = dist(0, source, source_filter, q, target, target_filter, l);
+  
   float d = 0.0;
   for(int i=0; i<source[l].rows; i++){
     for(int j=0; j<source[l].cols; j++){
       pixel = i*source[l].cols+j;
       d = dist(pixel, source, source_filter, q, target, target_filter, l);
+      
       if(d < dist_min){
 	dist_min = d;
 	index_min = pixel;
       }
     }
   }
-  
+ 
   return index_min;
 }
 
 int
 bestCoherenceMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* target_filter, int l, int q)
 {
-  int pixel = 0, p = 0;
+  int pixel = 0, p = target_filter[l].s[q] + (q-q);
   int r = 0, i_p1 = 0, j_p1 = 0;
   float dist_min = dist(0, source, source_filter, q, target, target_filter, l);
+  
   float d = 0.0;
   for(int i=0; i<NEIGHBOOR_SIZE_FINER; i++){
     for(int j=0; j<NEIGHBOOR_SIZE_FINER; j++){
@@ -40,7 +45,7 @@ bestCoherenceMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyr
       if( pixel < 0 )
 	pixel = 0;
       else if( pixel > target_filter[l].cols * target_filter[l].rows -1 )
-	pixel = source[l].cols * source[l].rows -1;
+	pixel = target_filter[l].cols * target_filter[l].rows -1;
 
       
       p = target_filter[l].s[pixel] + (q-pixel);
@@ -65,7 +70,7 @@ bestCoherenceMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyr
     p = 0;
   else if(p > source[l].cols * source[l].rows -1)
     p = source[l].cols * source[l].rows -1;
-  
+
   return p;
 }
 
@@ -84,7 +89,7 @@ bestMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* tar
   if(dist_coh < dist_patch * ( 1 + powf(2, l-L)*K) )
     return p_coh;
   else
-  return p_patch;
+    return p_patch;
 #endif
   
 #if 1
@@ -96,10 +101,11 @@ bestMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* tar
   float dist_coh = dist(p_coh, source, source_filter, q, target, target_filter, l);
   dist_coh *= dist_coh;
 
+ 
   if(dist_coh < dist_brute * ( 1 + powf(2, l-L)*K) )
     return p_coh;
   else
-  return p_brute;
+    return p_brute;
 #endif
 
 #if 0

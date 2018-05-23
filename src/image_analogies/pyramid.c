@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <math.h>
+#include<stdio.h>
 
 #include "pyramid.h"
 
@@ -36,7 +37,6 @@ init_pyramid(int cols, int rows, int s)
       pyramid[l].s = NULL;
     free(dim);
   }
-
   return pyramid;
 }
 
@@ -95,20 +95,41 @@ pyramid_level(int cols, int rows, float* data, int level)
     return out;
 }
 
+//Calcul la position du  pixel au niveau l-1
+int
+pixelL_1(int p, int cols)
+{
+  int i = p/cols;
+  int j = p - i*cols;
+  int new_i = i/2.0;
+  int new_j = j/2.0;;
+
+  return new_i * cols/2.0 + new_j;
+}
+
 float
 dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Pyramid* target_filter, int l)
 {
   float luminance = 0.0, mean = 0.0, sd = 0.0, dist = 0.0;
-  int q2 = q/4.0, p2 = p/4.0;
+  (void)source_filter;
+  (void)target_filter;
+
   if( l == 0 ){
     
-    luminance = (source[l].data[p] - target[l].data[q]) * (source[l].data[p] - target[l].data[q]);    
-    mean = (source_filter[l].mean[p] - target_filter[l].mean[q]) * (source_filter[l].mean[p] - target_filter[l].mean[q]) + (source[l].mean[p] - target[l].mean[q]) * (source[l].mean[p] - target[l].mean[q]);    
-    sd = (source_filter[l].sd[p] - target_filter[l].sd[q]) * (source_filter[l].sd[p] - target_filter[l].sd[q]) + (source[l].sd[p] - target[l].sd[q]) * (source[l].sd[p] - target[l].sd[q]); 
+      luminance = (source[l].data[p] - target[l].data[q]) * (source[l].data[p] - target[l].data[q]);    
+      mean = (source_filter[l].mean[p] - target_filter[l].mean[q]) * (source_filter[l].mean[p] - target_filter[l].mean[q]) + (source[l].mean[p] - target[l].mean[q]) * (source[l].mean[p] - target[l].mean[q]);    
+      sd = (source_filter[l].sd[p] - target_filter[l].sd[q]) * (source_filter[l].sd[p] - target_filter[l].sd[q]) + (source[l].sd[p] - target[l].sd[q]) * (source[l].sd[p] - target[l].sd[q]); 
     
-  
+    /*
+    luminance = (source[l].data[p] - target[l].data[q]) * (source[l].data[p] - target[l].data[q]);    
+    mean = (source[l].mean[p] - target[l].mean[q]) * (source[l].mean[p] - target[l].mean[q]);    
+    sd = (source[l].sd[p] - target[l].sd[q]) * (source[l].sd[p] - target[l].sd[q]); */
   }else{
+    int q2 = 0.0, p2 = 0.0;
+    q2 = pixelL_1(q, target[l].cols);
+    p2 = pixelL_1(p, source[l].cols);
 
+    
     luminance = (source[l].data[p] - target[l].data[q]) * (source[l].data[p] - target[l].data[q]);
     luminance += (source[l-1].data[p2] - target[l-1].data[q2]) * (source[l-1].data[p2] - target[l-1].data[q2]) + (source_filter[l-1].data[p2] - target_filter[l-1].data[q2]) * (source_filter[l-1].data[p2] - target_filter[l-1].data[q2]);
     
@@ -116,9 +137,20 @@ dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Py
     mean += (source_filter[l-1].mean[p2] - target_filter[l-1].mean[q2]) * (source_filter[l-1].mean[p2] - target_filter[l-1].mean[q2]) + (source[l-1].mean[p2] - target[l-1].mean[q2]) * (source[l-1].mean[p2] - target[l-1].mean[q2]);
     
     sd = (source_filter[l].sd[p] - target_filter[l].sd[q]) * (source_filter[l].sd[p] - target_filter[l].sd[q]) + (source[l].sd[p] - target[l].sd[q]) * (source[l].sd[p] - target[l].sd[q]);
-    sd += (source_filter[l-1].sd[p2] - target_filter[l-1].sd[q2]) * (source_filter[l-1].sd[p2] - target_filter[l-1].sd[q2]) + (source[l-1].sd[p2] - target[l-1].sd[q2]) * (source[l-1].sd[p2] - target[l-1].sd[q2]);    
-  }
-  dist = sqrtf(luminance + mean + sd);
+    sd += (source_filter[l-1].sd[p2] - target_filter[l-1].sd[q2]) * (source_filter[l-1].sd[p2] - target_filter[l-1].sd[q2]) + (source[l-1].sd[p2] - target[l-1].sd[q2]) * (source[l-1].sd[p2] - target[l-1].sd[q2]); 
+    
 
+    /*minance = (source[l].data[p] - target[l].data[q]) * (source[l].data[p] - target[l].data[q]);
+    luminance += (source[l-1].data[p2] - target[l-1].data[q2]) * (source[l-1].data[p2] - target[l-1].data[q2]) + (source_filter[l-1].data[p2] - target_filter[l-1].data[q2]) * (source_filter[l-1].data[p2] - target_filter[l-1].data[q2]);
+    
+    mean =  (source[l].mean[p] - target[l].mean[q]) * (source[l].mean[p] - target[l].mean[q]);
+    mean += (source_filter[l-1].mean[p2] - target_filter[l-1].mean[q2]) * (source_filter[l-1].mean[p2] - target_filter[l-1].mean[q2]) + (source[l-1].mean[p2] - target[l-1].mean[q2]) * (source[l-1].mean[p2] - target[l-1].mean[q2]);
+    
+    sd = (source[l].sd[p] - target[l].sd[q]) * (source[l].sd[p] - target[l].sd[q]);
+    sd += (source_filter[l-1].sd[p2] - target_filter[l-1].sd[q2]) * (source_filter[l-1].sd[p2] - target_filter[l-1].sd[q2]) + (source[l-1].sd[p2] - target[l-1].sd[q2]) * (source[l-1].sd[p2] - target[l-1].sd[q2]); */
+  }
+  
+  dist = sqrtf(luminance + mean + sd);
+  
   return dist;
 }

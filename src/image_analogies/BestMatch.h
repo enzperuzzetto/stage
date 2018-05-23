@@ -4,9 +4,9 @@
 
 #include "patchMatch.h"
 
-#define NEIGHBOOR_SIZE_COARSER 5
-#define NEIGHBOOR_SIZE_FINER 11
-#define K 0.1
+#define NEIGHBOOR_SIZE_COARSER 3
+#define NEIGHBOOR_SIZE_FINER 5
+#define K 0.5
 #define L 3
 
 
