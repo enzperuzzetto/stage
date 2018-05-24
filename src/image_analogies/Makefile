@@ -7,7 +7,11 @@ LDFLAGS  = -L$(ROOT)/lib
 LDLIBS   = -lbcl -lm
 
 BIN=\
-	analogy
+	analogy\
+	synthesis
+
+synthesis: conversion.o features.o synthesis.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
 analogy : features.o pyramid.o conversion.o patchMatch.o BestMatch.o main.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LDLIBS)
