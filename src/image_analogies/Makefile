@@ -9,6 +9,8 @@ LDLIBS   = -lbcl -lm
 BIN=\
 	analogy\
 	synthesis
+.PHONY: all
+all: $(BIN)
 
 synthesis: conversion.o features.o synthesis.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LDLIBS)

@@ -9,7 +9,7 @@
 
 
 float
-dist(int p,  float* mean_tex, float* sd_tex, int q, float* meant, float* sdt)
+dist(int p, float* mean_tex, float* sd_tex, int q, float* meant, float* sdt)
 {
 
   float  sd, mean;
@@ -19,10 +19,10 @@ dist(int p,  float* mean_tex, float* sd_tex, int q, float* meant, float* sdt)
 }
 
 float
-dist1(int tex_cols,int p, float* lumtex, int cols, int q, float* lumt, int size)
+dist1(int tex_cols,int p, float* lumtex, float* mean_tex, float* sd_tex, int cols, int q, float* lumt, float* meant, float* sdt, int size)
 {
   int i1, j1, p1, q1;
-  float sum = 0.0;
+  float lum = 0.0, sd, mean;
   for(int i=0; i< size; i++){
     for(int j=0; j<size; j++){
       i1 = i-size/2.0;
@@ -33,16 +33,19 @@ dist1(int tex_cols,int p, float* lumtex, int cols, int q, float* lumt, int size)
 
       if(p1 < 0 || q1 < 0)
 	break;
-      if(p1 == p)
+      if(p1 == p || q1 == q)
 	break;
 
-      sum += (lumtex[p1] -lumt[q1]) * (lumtex[p1] - lumt[q1]);
+      lum += (lumtex[p1] -lumt[q1]) * (lumtex[p1] - lumt[q1]);
     }
-    if(p1 == p)
+    if(p1 == p || q1 == q)
       break;
   }
 
-  return sqrt(sum);
+  mean = (mean_tex[p] - meant[q]) *  (mean_tex[p] - meant[q]);
+  sd = (sd_tex[p] - sdt[q]) *  (sd_tex[p] - sdt[q]);
+
+  return sqrt(lum + mean + sd);
 }
       
 
@@ -144,10 +147,10 @@ process(char* texture_name, int cols, int rows, int windowSize)
 	  
 	    r = q + (i1*cols+j1);
 
-	    if( r > 0 || r == q)
+	    if( r >= 0 || r == q)
 	      break;
 	  }
-	  if( r > 0 || r == q)
+	  if( r >= 0 || r == q)
 	    break;
 	}
 
@@ -156,7 +159,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
       }
      
       if(r >= 0){
-	dist_min = dist1(tex_cols, r, lumtex, cols, q, lum_t, windowSize);
+	dist_min = dist1(tex_cols, r, lumtex, meanTex, sdTex, cols, q, lum_t, meant, sdt, windowSize);
       
 	for(int x=0; x<windowSize; x++){
 	  for(int y=0; y<windowSize; y++){
@@ -167,14 +170,19 @@ process(char* texture_name, int cols, int rows, int windowSize)
 
 	    if(pixel == q || pixel < 0 )
 	      break;
-	  
-	    p = s[pixel] + (q-pixel);
+
+	    if( cols > tex_cols)
+	      p = s[pixel] + (q-pixel) + (cols - tex_cols);
+	    else if( cols < tex_cols)
+	      p = s[pixel] + (q-pixel) + (tex_cols - cols);
+	    else
+	      p = s[pixel] + (q-pixel);
 
 	    if( p >= tex_cols * tex_rows)
-	      p = tex_cols * tex_rows -1;
+	      p = s[pixel];
 
 	    //d = dist(p, meanTex, sdTex, q,  meant, sdt);
-	    d = dist1(tex_cols, p, lumtex, cols, q, lum_t, windowSize);
+	    d = dist1(tex_cols, p, lumtex, meanTex, sdTex, cols, q, lum_t, meant, sdt, windowSize);
 	  
 	    if(d < dist_min){
 	      dist_min = d;
@@ -190,7 +198,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
 	p = s[r] + rprime;
 
 	if( p > tex_cols*tex_rows-1)
-	  p = tex_cols*tex_rows-1;
+	  p = s[r];
       
 	lum_t[q] = lumtex[p];
 	s[q] = p;

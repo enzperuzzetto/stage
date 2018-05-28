@@ -1,0 +1,48 @@
+#
+# Makefile 
+#
+GLUTHOME = /home/michael/glut
+GLUTL = $(GLUTHOME)/lib/glut.n32/libglut.a
+LIBS = $(GLUTL) -lGLU -lGL -lXmu -lXi -lXext -lX11 -limage -lm
+CC = cc
+C = cc
+CFLAGS = -I./ -I$(GLUTHOME)/include -m32 -Ofast
+LFLAGS =  -m32 -Ofast
+
+OBJ_DIR = ./
+EXEC = ./texture
+
+OBJS=$(OBJ_DIR)texture.o $(OBJ_DIR)rgb.o $(OBJ_DIR)common.o $(OBJ_DIR)main.o $(OBJ_DIR)ui.o
+
+all:	$(EXEC)
+
+$(EXEC):	$(OBJS)
+	$(CC) $(LFLAGS) -o $(EXEC) $(OBJS) $(LIBS)
+
+$(OBJ_DIR)texture.o: texture.cc
+	$(CC) $(CFLAGS) -o $(OBJ_DIR)texture.o -c texture.cc
+
+$(OBJ_DIR)texture2.o: texture2.cc
+	$(CC) $(CFLAGS) -o $(OBJ_DIR)texture2.o -c texture2.cc
+
+$(OBJ_DIR)texturet.o: texturet.cc
+	$(CC) $(CFLAGS) -o $(OBJ_DIR)texturet.o -c texturet.cc
+
+$(OBJ_DIR)common.o: common.cc
+	$(CC) $(CFLAGS) -o $(OBJ_DIR)common.o -c common.cc
+
+$(OBJ_DIR)rgb.o: rgb.c
+	$(C) $(CFLAGS) -o $(OBJ_DIR)rgb.o -c rgb.c
+
+$(OBJ_DIR)main.o: main.cc
+	$(CC) $(CFLAGS) -o $(OBJ_DIR)main.o -c main.cc
+
+$(OBJ_DIR)maint.o: maint.cc
+	$(CC) $(CFLAGS) -o $(OBJ_DIR)maint.o -c maint.cc
+
+$(OBJ_DIR)ui.o: ui.cc
+	$(CC) $(CFLAGS) -o $(OBJ_DIR)ui.o -c ui.cc
+
+clean:
+	rm -f $(EXEC)
+	rm -f *.o
