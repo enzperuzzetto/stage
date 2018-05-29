@@ -46,6 +46,22 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
   float* data_target = channel(cols_t, rows_t, t_yiq, 0);
   float* data_target_filter = malloc(sizeof(float) * cols_t * rows_t);
 
+  //*************** luminance remapping ************************************//
+#if 1
+  float meanA = mean_all_img(cols_s, rows_s, data_source);
+  float sdA = sd_all_img(cols_s, rows_s, data_source, meanA);
+
+  float meanB = mean_all_img(cols_t, rows_t, data_target);
+  float sdB = sd_all_img(cols_t, rows_t, data_target, meanB);
+
+  float sdAB = sdB / sdA;
+  for(int i=0; i<rows_s; i++){
+    for(int j=0; j<cols_s; j++){
+      data_source[i*cols_s+j] = sdAB * (data_source[i*cols_s+j] - meanA) + meanB;
+      data_source_filter[i*cols_s+j] = sdAB * (data_source_filter[i*cols_s+j] - meanA) + meanB;
+    }
+  }
+#endif
   printf("fait\n");
    
   //*********** Compute L level of pyramid *****************************//
@@ -134,12 +150,12 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
   printf("Convertion en RGB\n");
        
   //************* Copy I & Q B to B' ************************************//
-#if 1
+#if 0
   float* it = channel(cols_t, rows_t, t_yiq, 1);
   float* qt = channel(cols_t, rows_t, t_yiq, 2);
 #endif
   
-#if 0 //transfer de couleur
+#if 1 //transfer de couleur
   float* isf = channel(cols_s, rows_s, sf_yiq, 1);
   float* qsf = channel(cols_s, rows_s, sf_yiq, 2);
 

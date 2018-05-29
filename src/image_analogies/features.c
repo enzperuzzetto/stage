@@ -88,6 +88,7 @@ mean_img(int cols, int rows, float* in, float* means, int size, int half)
   }
 }
 
+
 void
 sd_img(int cols, int rows, float* in, float* mean, float* sd, int size, int half)
 {
@@ -108,4 +109,31 @@ max(int a, int b)
     return a;
   else
     return b;
+}
+
+float
+mean_all_img(int cols, int rows, float* in)
+{
+  float m = 0.0;
+  for(int i=0; i<rows; i++){
+    for(int j=0; j<cols; j++){
+      m += in[i*cols+j];
+    }
+  }
+
+  return m/(float)(rows*cols);
+}
+
+float
+sd_all_img(int cols, int rows, float* in, float mean)
+{
+  float var = 0.0, tmp;
+  for(int i=0; i<rows; i++){
+    for(int j=0; j<cols; j++){
+      tmp = (in[i*cols+j]-mean) * (in[i*cols+j]-mean);
+      var += tmp;
+    }
+  }
+
+  return sqrtf(var/(float)(rows*cols));
 }

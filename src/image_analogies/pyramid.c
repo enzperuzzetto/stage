@@ -107,6 +107,7 @@ pixelL_1(int p, int cols)
   return new_i * cols/2.0 + new_j;
 }
 
+/*
 float
 dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Pyramid* target_filter, int l)
 {
@@ -165,4 +166,71 @@ dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Py
   dist = sqrtf(luminance + mean + sd);
   
   return dist;
+}
+*/
+
+float
+dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Pyramid* target_filter, int l)
+{
+  float d_prime, d;
+  float luminance, mean, sd, tmp;
+  if( l==0){
+
+    tmp = source[l].data[p] - target[l].data[q];
+    luminance = tmp * tmp;
+
+    tmp = source[l].mean[p] - target[l].mean[q];
+    mean = tmp * tmp;
+
+    tmp = source[l].sd[p] - target[l].sd[q];
+    sd = tmp * tmp;
+
+    d = luminance + mean + sd;
+
+    tmp = source_filter[l].mean[p] - target_filter[l].mean[q];
+    mean = tmp * tmp;
+
+    tmp = source_filter[l].sd[p] - target_filter[l].sd[q];
+    sd = tmp * tmp;
+
+    d_prime = mean + sd;
+
+  }else{
+
+    int q2 = 0.0, p2 = 0.0;
+    q2 = pixelL_1(q, target[l].cols);
+    p2 = pixelL_1(p, source[l].cols);
+    
+    tmp = source[l].data[p] - target[l].data[q];
+    luminance = tmp * tmp;
+    tmp = source[l-1].data[p2] - target[l-1].data[q2];
+    luminance += tmp * tmp;
+
+    tmp = source[l].mean[p] - target[l].mean[q];
+    mean = tmp * tmp;
+    tmp = source[l-1].mean[p2] - target[l-1].mean[q2];
+    mean += tmp * tmp;
+
+    tmp = source[l].sd[p] - target[l].sd[q];
+    sd = tmp * tmp;
+    tmp = source[l-1].sd[p2] - target[l-1].sd[q2];
+    sd += tmp * tmp;
+
+    d = luminance + mean + sd;
+
+    tmp = source_filter[l].mean[p] - target_filter[l].mean[q];
+    mean = tmp * tmp;
+    tmp = source_filter[l-1].mean[p2] - target_filter[l-1].mean[q2];
+    mean += tmp * tmp;
+
+    tmp = source_filter[l].sd[p] - target_filter[l].sd[q];
+    sd = tmp * tmp;
+    tmp = source_filter[l-1].sd[p2] - target[l-1].sd[q2];
+    sd += tmp * tmp;
+
+    d_prime = mean + sd;
+
+  }
+
+  return  W * d +  d_prime;
 }

@@ -6,7 +6,7 @@
 
 #define NEIGHBOOR_SIZE_COARSER 3
 #define NEIGHBOOR_SIZE_FINER 5
-#define K 1
+#define K 2
 #define L 3
 
 

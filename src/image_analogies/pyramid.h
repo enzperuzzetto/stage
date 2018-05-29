@@ -3,7 +3,7 @@
 #define __PYRAMID_H__
 
 #define L 3
-#define W 0.5
+#define W 0.2
 
 typedef struct Pyramid
 {

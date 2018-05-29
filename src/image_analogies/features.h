@@ -80,4 +80,11 @@ sd_img(int cols, int rows, float* in, float* mean, float* sd, int size, int half
 int
 max(int a, int b);
 
+
+float
+mean_all_img(int cols, int rows, float* in);
+
+float
+sd_all_img(int cols, int rows, float* in, float mean);
+
 #endif
