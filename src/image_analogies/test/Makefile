@@ -11,7 +11,9 @@ BIN=\
 	pyramid_gaussian\
 	patch_match\
 	random\
-	cannaux
+	cannaux\
+	option\
+	texture
 
 .PHONY: all
 all: $(OBJ) $(BIN)

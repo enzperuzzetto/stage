@@ -46,8 +46,10 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
   float* data_target = channel(cols_t, rows_t, t_yiq, 0);
   float* data_target_filter = malloc(sizeof(float) * cols_t * rows_t);
 
+  
+
   //*************** luminance remapping ************************************//
-#if 1
+#if 0
   float meanA = mean_all_img(cols_s, rows_s, data_source);
   float sdA = sd_all_img(cols_s, rows_s, data_source, meanA);
 
@@ -72,7 +74,7 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
   Pyramid* target = init_pyramid(cols_t, rows_t, 0);
   Pyramid* target_filter = init_pyramid(cols_t, rows_t, 1);
 
-    
+  int pixel;
   for(int l=0; l<L; l++){
     printf("Début level %d\n",l);
      
@@ -97,6 +99,16 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
       target[l].data = pyramid_level(cols_t, rows_t, data_target, L-1-l);
       target_filter[l].data = pyramid_level(cols_t, rows_t, data_target_filter, L-1-l);
     }
+
+    srand(time(NULL));
+    for(int i=0; i<target_filter[l].rows; i++){
+      for(int j=0; j<target_filter[l].cols; j++){
+	pixel = rand()%(source_filter[l].cols*source_filter[l].rows);
+	target_filter[l].data[i*target_filter[l].cols+j] = source_filter[l].data[pixel];
+	target_filter[l].s[i*target_filter[l].cols+j] = pixel;
+      }
+    }
+    
     //************* Compute Features Means & standard deviation **************************
     
     mean_img(source[l].cols, source[l].rows, source[l].data, source[l].mean, NEIGHBOOR_SIZE_FINER, 0);
@@ -150,19 +162,19 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
   printf("Convertion en RGB\n");
        
   //************* Copy I & Q B to B' ************************************//
-#if 0
+#if 1
   float* it = channel(cols_t, rows_t, t_yiq, 1);
   float* qt = channel(cols_t, rows_t, t_yiq, 2);
 #endif
   
-#if 1 //transfer de couleur
+#if 0 //transfer de couleur
   float* isf = channel(cols_s, rows_s, sf_yiq, 1);
   float* qsf = channel(cols_s, rows_s, sf_yiq, 2);
 
   float* it = malloc(sizeof(float) * cols_t * rows_t);
   float* qt = malloc(sizeof(float) * cols_t * rows_t);
 
-  int pixel = 0;
+  pixel = 0;
   for(int i=0; i<rows_t; i++){
     for(int j=0; j<cols_t; j++){
       pixel = target_filter[L-1].s[i*cols_t+j];
@@ -223,7 +235,8 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
 
 void
 usage (char *s){
-  fprintf(stderr, "Usage: %s <ims> <ims_filter> <imt> \n", s);
+  fprintf(stderr, "Usage: %s <traitement> <ims> <ims_filter> <imt> \n", s);
+  fprintf(stderr, "%s -h/--help pour plus d'informations\n",s);
   exit(EXIT_FAILURE);
 }
 

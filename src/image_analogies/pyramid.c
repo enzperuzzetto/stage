@@ -107,7 +107,7 @@ pixelL_1(int p, int cols)
   return new_i * cols/2.0 + new_j;
 }
 
-/*
+#if 0
 float
 dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Pyramid* target_filter, int l)
 {
@@ -167,14 +167,16 @@ dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Py
   
   return dist;
 }
-*/
+#endif
+
 
 float
 dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Pyramid* target_filter, int l)
 {
   float d_prime, d;
   float luminance, mean, sd, tmp;
-  if( l==0){
+  int k = 0, i1, j1, p1, q1;
+  if( l == 0){
 
     tmp = source[l].data[p] - target[l].data[q];
     luminance = tmp * tmp;
@@ -187,13 +189,38 @@ dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Py
 
     d = luminance + mean + sd;
 
+    luminance = 0.0;
+    for(int i=0; i<NEIGHBOOR_SIZE_FINER; i++){
+      for(int j=0; j<NEIGHBOOR_SIZE_FINER; j++){
+	i1 = i-NEIGHBOOR_SIZE_FINER/2.0;
+	j1 = j-NEIGHBOOR_SIZE_FINER/2.0;
+
+	p1 = p + (i1*source_filter[l].cols+j1);
+	q1 = q + (i1*target_filter[l].cols+j1);
+
+	if(p1 < 0 || q1 < 0)
+	  break;
+	if(p1 == p || q1 == q)
+	  break;
+
+	tmp = (source_filter[l].data[p1] - target_filter[l].data[q1]);
+	luminance += tmp * tmp;
+	k++;
+      }
+      if(p1 == p || q1 == q)
+	break;
+    }
+
+    if( k == 0)
+      luminance = 99999999999999999;
+    
     tmp = source_filter[l].mean[p] - target_filter[l].mean[q];
     mean = tmp * tmp;
 
     tmp = source_filter[l].sd[p] - target_filter[l].sd[q];
     sd = tmp * tmp;
 
-    d_prime = mean + sd;
+    d_prime = luminance + mean + sd;
 
   }else{
 
@@ -218,6 +245,50 @@ dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Py
 
     d = luminance + mean + sd;
 
+    luminance = 0.0;
+    for(int i=0; i<NEIGHBOOR_SIZE_FINER; i++){
+      for(int j=0; j<NEIGHBOOR_SIZE_FINER; j++){
+	i1 = i-NEIGHBOOR_SIZE_FINER/2.0;
+	j1 = j-NEIGHBOOR_SIZE_FINER/2.0;
+
+	p1 = p + (i1*source_filter[l].cols+j1);
+	q1 = q + (i1*target_filter[l].cols+j1);
+
+	if(p1 < 0 || q1 < 0)
+	  break;
+	if(p1 == p || q1 == q)
+	  break;
+
+	tmp = (source_filter[l].data[p1] - target_filter[l].data[q1]);
+	luminance += tmp * tmp;
+	k++;
+      }
+      if(p1 == p || q1 == q)
+	break;
+    }
+
+    k=0;
+
+    for(int i=0; i<NEIGHBOOR_SIZE_COARSER; i++){
+      for(int j=0; j<NEIGHBOOR_SIZE_COARSER; j++){
+	i1 = i-NEIGHBOOR_SIZE_COARSER/2.0;
+	j1 = j-NEIGHBOOR_SIZE_COARSER/2.0;
+
+	p1 = p2 + (i1*source_filter[l].cols+j1);
+	q1 = q2 + (i1*target_filter[l].cols+j1);
+
+	if(p1 < 0 || q1 < 0)
+	  break;
+	
+	tmp = (source_filter[l].data[p1] - target_filter[l].data[q1]);
+	luminance += tmp * tmp;
+	k++;
+      }
+    }
+
+    if (k == 0)
+      luminance = 99999999999999999;
+
     tmp = source_filter[l].mean[p] - target_filter[l].mean[q];
     mean = tmp * tmp;
     tmp = source_filter[l-1].mean[p2] - target_filter[l-1].mean[q2];
@@ -228,9 +299,9 @@ dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Py
     tmp = source_filter[l-1].sd[p2] - target[l-1].sd[q2];
     sd += tmp * tmp;
 
-    d_prime = mean + sd;
+    d_prime = luminance + mean + sd;
 
   }
-
-  return  W * d +  d_prime;
+  
+  return  W * d + d_prime;
 }

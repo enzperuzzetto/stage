@@ -29,9 +29,10 @@ bruteForceMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyrami
 int
 bestCoherenceMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* target_filter, int l, int q)
 {
-  int pixel = 0, p = target_filter[l].s[q] + (q-q);
-  int r = 0, i_p1 = 0, j_p1 = 0;
-  float dist_min = dist(0, source, source_filter, q, target, target_filter, l);
+  srand(time(NULL));
+  int pixel, pmin = target_filter[l].s[q], p;
+  int i_p1, j_p1;
+  float dist_min = dist(pmin, source, source_filter, q, target, target_filter, l);
   
   float d = 0.0;
   for(int i=0; i<NEIGHBOOR_SIZE_FINER; i++){
@@ -40,38 +41,24 @@ bestCoherenceMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyr
       j_p1 = j - NEIGHBOOR_SIZE_FINER/2.0;
       pixel = q + (i_p1*target_filter[l].cols+j_p1);
 
-      if(pixel == q)
+      if(pixel == q || pixel < 0)
 	break;
-      if( pixel < 0 )
-	pixel = 0;
-      else if( pixel > target_filter[l].cols * target_filter[l].rows -1 )
-	pixel = target_filter[l].cols * target_filter[l].rows -1;
-
       
-      p = target_filter[l].s[pixel] + (q-pixel);
+      p = target_filter[l].s[pixel] -i_p1*source_filter[l].cols-j_p1;
       
-      if(p < 0)
-	p = 0;
-      else if(p > source[l].cols * source[l].rows -1)
-	p = source[l].cols * source[l].rows -1;
+      if(p < 0 || p > source[l].cols * source[l].rows -1)
+	p =  rand()%(source_filter[l].cols*source_filter[l].rows);
       
       d = dist(p, source, source_filter, q, target, target_filter, l);
    
       if(d < dist_min){
-	r = pixel;
+	pmin = p;
 	dist_min = d;
       }
     }
   }
 
-  p = target_filter[l].s[r] + (q - r);
-  
-  if(p < 0)
-    p = 0;
-  else if(p > source[l].cols * source[l].rows -1)
-    p = source[l].cols * source[l].rows -1;
-
-  return p;
+  return pmin;
 }
 
 int

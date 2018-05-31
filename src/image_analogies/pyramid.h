@@ -2,8 +2,11 @@
 
 #define __PYRAMID_H__
 
+#define NEIGHBOOR_SIZE_COARSER 3
+#define NEIGHBOOR_SIZE_FINER 5
+#define K 5
 #define L 3
-#define W 0.2
+#define W 1.0
 
 typedef struct Pyramid
 {
