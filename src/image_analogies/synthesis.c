@@ -19,12 +19,13 @@ dist(int p, float* mean_tex, float* sd_tex, int q, float* meant, float* sdt)
 }
 
 float
-dist1(int tex_cols,int p, float* lumtex, float* mean_tex, float* sd_tex, int cols, int q, float* lumt, float* meant, float* sdt, int size)
+dist1(int tex_cols,int p, float* lumtex, float* mean_tex, float* sd_tex, int cols, int q, float* lumt, float* meant, float* sdt, int size, int nb)
 {
   (void)mean_tex;
   (void)meant;
   (void)sd_tex;
   (void)sdt;
+  (void)nb;
   int i1, j1, p1, q1, k=0;
   float lum = 0.0, sd, mean;
   for(int i=0; i< size; i++){
@@ -37,21 +38,24 @@ dist1(int tex_cols,int p, float* lumtex, float* mean_tex, float* sd_tex, int col
 
       if(p1 < 0 || q1 < 0)
 	break;
-      if(p1 == p || q1 == q)
+      if((p1 == p && nb==0) || (q1 == q && nb==0))
 	break;
 
       lum += (lumtex[p1] -lumt[q1]) * (lumtex[p1] - lumt[q1]);
       k++;
     }
-    if(p1 == p || q1 == q)
+    if((p1 == p && nb==0) || (q1 == q && nb==0))
       break;
   }
   
 
   mean = (mean_tex[p] - meant[q]) *  (mean_tex[p] - meant[q]);
-    sd = (sd_tex[p] - sdt[q]) *  (sd_tex[p] - sdt[q]);
+  sd = (sd_tex[p] - sdt[q]) *  (sd_tex[p] - sdt[q]);
   if(k==0)
     return 99999999999999999;
+  (void)mean;
+  (void)sd;
+  //printf(" %f ",sd);
   return sqrt(lum + mean + sd);
 }
       
@@ -95,7 +99,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
       s[i*cols+j] = pixel;
     }
   }
-  for(int k=0; k<2; k++){
+  for(int k=0; k<1; k++){
     for(int i=0; i<rows; i++){
       for(int j=0; j<cols; j++){
 	q = i*cols+j;
@@ -107,13 +111,13 @@ process(char* texture_name, int cols, int rows, int windowSize)
 	
 	p = 0;
 	//dist_min = dist(p, meanTex, sdTex, q,  meant, sdt);
-	dist_min = dist1(tex_cols, p, lumtex, meanTex, sdTex, cols, q, lum_t, meant, sdt, windowSize);
+	dist_min = dist1(tex_cols, p, lumtex, meanTex, sdTex, cols, q, lum_t, meant, sdt, windowSize,k);
 	for(int x=0; x<tex_rows; x++){
 	  for(int y=0; y<tex_cols; y++){
 	    pixel = x*tex_cols+y;
 
 	    //d = dist(pixel, meanTex, sdTex, q,  meant, sdt);
-	    d = dist1(tex_cols, pixel, lumtex, meanTex, sdTex, cols, q, lum_t, meant, sdt, windowSize);
+	    d = dist1(tex_cols, pixel, lumtex, meanTex, sdTex, cols, q, lum_t, meant, sdt, windowSize,k);
 	    if(d < dist_min){
 	      dist_min = d;
 	      p = pixel;
@@ -122,7 +126,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
 	  }
 	}
 
-	//printf( " %f %f %f %f\n",meant[q], sdt[q], meanTex[p], sdTex[p]);
+	printf( " %f %f %f %f\n",meant[q], sdt[q], meanTex[p], sdTex[p]);
 	lum_t[q] = lumtex[p];
 	s[q] = p;
 	// }
@@ -142,7 +146,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
     }
   }
   int i1, j1, pmin;
-  for(int k=0; k<2; k++){
+  for(int k=0; k<1; k++){
     for(int i=0; i<rows; i++){
       for(int j=0; j<cols; j++){
 	q = i*cols+j;
@@ -151,7 +155,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
 	sdt[q] =  standard_deviation(cols, rows, lum_t, meant[q], q, windowSize, 1);
 
 	pmin = s[q];
-	dist_min = dist1(tex_cols, pmin, lumtex, meanTex, sdTex, cols, q, lum_t, meant, sdt, windowSize);
+	dist_min = dist1(tex_cols, pmin, lumtex, meanTex, sdTex, cols, q, lum_t, meant, sdt, windowSize,k);
       
 	for(int x=0; x<windowSize; x++){
 	  for(int y=0; y<windowSize; y++){
@@ -168,7 +172,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
 	      p =  rand()%(tex_cols*tex_rows);
 		
 	    //d = dist(p, meanTex, sdTex, q,  meant, sdt);
-	    d = dist1(tex_cols, p, lumtex, meanTex, sdTex, cols, q, lum_t, meant, sdt, windowSize);
+	    d = dist1(tex_cols, p, lumtex, meanTex, sdTex, cols, q, lum_t, meant, sdt, windowSize,k);
 	  
 	    if(d < dist_min){
 	      dist_min = d;

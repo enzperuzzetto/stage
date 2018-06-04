@@ -6,34 +6,37 @@
 #include "bcl.h"
 
 
+
 float
 dist(int tex_cols,int p, float* Rtex, float* Gtex, float* Btex, int cols, int q, float* Rout, float* Gout, float* Bout, int size)
 {
-  int i1, j1, p1, q1, k=0;
+  int  p1, q1, k=0;
   float sum=0.0,r, g, b;
-  for(int i=0; i< size; i++){
-    for(int j=0; j<size; j++){
-      i1 = i-size/2.0;
-      j1 = j-size/2.0;
+  int start = -(int)(size/2.0), end = (int)(size/2.0);
+  for(int i=start; i<end+1; i++){
+    for(int j=start; j<end+1; j++){
 
-      p1 = p + (i1*tex_cols+j1);
-      q1 = q + (i1*cols+j1);
-
-      if(p1 < 0 || q1 < 0)
-	break;
+      p1 = p + (i*tex_cols+j);
+      q1 = q + (i*cols+j);
+           
       if(p1 == p || q1 == q)
 	break;
-      r = (Rtex[p1] - Rout[q1]) * (Rtex[p1] - Rout[q1]);
-      g = (Gtex[p1] - Gout[q1]) * (Gtex[p1] - Gout[q1]);
-      b = (Btex[p1] - Bout[q1]) * (Btex[p1] - Bout[q1]);
-      sum += r + g + b;
-      k++;
+      
+      if(p1 >=0 && q1 >=0){
+	r = (Rtex[p1] - Rout[q1]) * (Rtex[p1] - Rout[q1]);
+	g = (Gtex[p1] - Gout[q1]) * (Gtex[p1] - Gout[q1]);
+	b = (Btex[p1] - Bout[q1]) * (Btex[p1] - Bout[q1]);
+	sum += r + g + b;
+	k++;
+      }
+      
     }
     if(p1 == p || q1 == q)
       break;
   }
   if(k==0)
-    return 99999999999999999;
+    sum = 99999999999999999;
+  
   return sqrtf(sum);
 }
 
@@ -62,6 +65,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
     }
   }
 
+  
   float* Rout = malloc(sizeof(float) * cols * rows);
   float* Gout = malloc(sizeof(float) * cols * rows);
   float* Bout = malloc(sizeof(float) * cols * rows);
@@ -70,9 +74,9 @@ process(char* texture_name, int cols, int rows, int windowSize)
   
   int* s = malloc(sizeof(int)* cols * rows);
   
-  float d, dist_min;
-  int q, p, pixel;
-#if 0 // Wei and Levoy texture synthesis
+  int pixel, q, p;
+  float dist_min, d;
+#if 1 // Wei and Levoy texture synthesis
   srand(time(NULL));
   for(int i=0; i<rows; i++){
     for(int j=0; j<cols; j++){
@@ -83,7 +87,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
       s[i*cols+j] = pixel;
     }
   }
-  for(int k=0; k<2;k++){
+  for(int k=0; k<1;k++){
     for(int i=0; i<rows; i++){
       for(int j=0; j<cols; j++){
 	q = i*cols+j;
@@ -95,16 +99,15 @@ process(char* texture_name, int cols, int rows, int windowSize)
 	    pixel = x*tex_cols+y;
 
 	    d =  dist(tex_cols, pixel, Rtex, Gtex, Btex,cols, q, Rout, Gout, Bout, windowSize);
-
-	    //printf(" d%f dmin%f p%d pmin%d\n",d, dist_min, pixel, p);
-	    if(d < dist_min){
+	    //printf("%d: %d %f %d %f\n", q, p, dist_min, pixel, d);
+	    if(d <= dist_min){
 	      dist_min = d;
 	      p = pixel;
 	    }
 
 	  }
 	}
-
+	
 	Rout[q] = Rtex[p];
 	Gout[q] = Gtex[p];
 	Bout[q] = Btex[p];
@@ -114,7 +117,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
   }
 #endif
 
-#if 1 // Ashikhmin texture synthesis
+#if 0 // Ashikhmin texture synthesis
    
   srand(time(NULL));
   for(int i=0; i<rows; i++){
@@ -127,7 +130,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
     }
   }
   int i1, j1, pmin;// r, rprim, 
-  for(int k=0; k<2; k++){
+  for(int k=0; k<1; k++){
     for(int i=0; i<rows; i++){
       for(int j=0; j<cols; j++){
 	q = i*cols+j;
@@ -173,7 +176,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
 
   
 #endif
-
+  
   float valr, valb, valg;
   for(int i=0; i<rows; i++){
     for(int j=0; j<cols; j++){
@@ -203,6 +206,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
   
 
   pnm_save(imt, PnmRawPpm, "syn.ppm");
+  
   
 }
 

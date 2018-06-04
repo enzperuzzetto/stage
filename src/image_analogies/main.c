@@ -46,6 +46,8 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
   float* data_target = channel(cols_t, rows_t, t_yiq, 0);
   float* data_target_filter = malloc(sizeof(float) * cols_t * rows_t);
 
+  int* s = malloc(sizeof(int) * cols_t * rows_t);
+
   
 
   //*************** luminance remapping ************************************//
@@ -75,6 +77,18 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
   Pyramid* target_filter = init_pyramid(cols_t, rows_t, 1);
 
   int pixel;
+  srand(time(NULL));
+  for(int i=0; i<rows_t; i++){
+    for(int j=0; j<cols_t; j++){
+      //pixel = rand()%(cols_s*rows_s);
+      data_target_filter[i*cols_t+j] = data_source_filter[rand()%(cols_s*rows_s)];//data_source_filter[pixel];
+      s[i*cols_t+j] = rand()%(cols_s*rows_s);
+      /* target_filter[l].data[i*target_filter[l].cols+j] = source_filter[l].data[pixel];
+	 target_filter[l].s[i*target_filter[l].cols+j] = pixel;*/
+    }
+  }
+
+ 
   for(int l=0; l<L; l++){
     printf("Début level %d\n",l);
      
@@ -82,10 +96,15 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
       free(source[l].data);
       free(source_filter[l].data);
       free(target[l].data);
+      free(target_filter[l].data);
+      free(target_filter[l].s);
       
       source[l].data = data_source;
       source_filter[l].data = data_source_filter;
       target[l].data = data_target;
+      target_filter[l].data = data_target_filter;
+      target_filter[l].s = s;
+      
 
     }else{
       free(source[l].data);
@@ -98,16 +117,14 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
            
       target[l].data = pyramid_level(cols_t, rows_t, data_target, L-1-l);
       target_filter[l].data = pyramid_level(cols_t, rows_t, data_target_filter, L-1-l);
-    }
-
-    srand(time(NULL));
-    for(int i=0; i<target_filter[l].rows; i++){
-      for(int j=0; j<target_filter[l].cols; j++){
-	pixel = rand()%(source_filter[l].cols*source_filter[l].rows);
-	target_filter[l].data[i*target_filter[l].cols+j] = source_filter[l].data[pixel];
-	target_filter[l].s[i*target_filter[l].cols+j] = pixel;
+      for(int i=0; i<target_filter[l].rows; i++){
+	for(int j=0; j<target_filter[l].cols; j++){
+	  target_filter[l].s[i*target_filter[l].cols+j] = s[i*2*(L-1-l)*cols_t+j*2*(L-1-l)];
+	}
       }
     }
+
+    
     
     //************* Compute Features Means & standard deviation **************************
     
@@ -136,7 +153,7 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
     //************* Best Match   **********************************************************
 
     int p, q;
-
+    for(int k=0; k<1; k++){
     for(int i=0; i<target_filter[l].rows; i++){
       for(int j=0; j<target_filter[l].cols; j++){
 
@@ -156,18 +173,18 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
       
     printf("Fait \n");
   }
-
+  }
   //*************************************************************************************
 
   printf("Convertion en RGB\n");
        
   //************* Copy I & Q B to B' ************************************//
-#if 1
+#if 0
   float* it = channel(cols_t, rows_t, t_yiq, 1);
   float* qt = channel(cols_t, rows_t, t_yiq, 2);
 #endif
   
-#if 0 //transfer de couleur
+#if 1 //transfer de couleur
   float* isf = channel(cols_s, rows_s, sf_yiq, 1);
   float* qsf = channel(cols_s, rows_s, sf_yiq, 2);
 
@@ -211,7 +228,7 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
   pnm_save(imt_filter, PnmRawPpm, "filter.ppm");
   printf("Fait\n");
 
-
+  /*
   free(imsRGB);
   free(ims_filterRGB);
   free(imtRGB);
@@ -230,7 +247,7 @@ process(char* ims_name, char* ims_filter_name, char* imt_name)
   free(it);
   free(qt);
   free(yiq);
-  free(rgb);
+  free(rgb);*/
 }
 
 void

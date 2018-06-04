@@ -173,7 +173,7 @@ dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Py
 float
 dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Pyramid* target_filter, int l)
 {
-  float d_prime, d;
+  float d_prime=0.0, d=0.0;
   float luminance, mean, sd, tmp;
   int k = 0, i1, j1, p1, q1;
   if( l == 0){
@@ -267,6 +267,8 @@ dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Py
 	break;
     }
 
+    if (k == 0)
+      luminance = 99999999999999999;
     k=0;
 
     for(int i=0; i<NEIGHBOOR_SIZE_COARSER; i++){
@@ -274,13 +276,13 @@ dist( int p, Pyramid* source, Pyramid* source_filter, int q, Pyramid* target, Py
 	i1 = i-NEIGHBOOR_SIZE_COARSER/2.0;
 	j1 = j-NEIGHBOOR_SIZE_COARSER/2.0;
 
-	p1 = p2 + (i1*source_filter[l].cols+j1);
-	q1 = q2 + (i1*target_filter[l].cols+j1);
+	p1 = p2 + (i1*source_filter[l-1].cols+j1);
+	q1 = q2 + (i1*target_filter[l-1].cols+j1);
 
 	if(p1 < 0 || q1 < 0)
 	  break;
 	
-	tmp = (source_filter[l].data[p1] - target_filter[l].data[q1]);
+	tmp = (source_filter[l-1].data[p1] - target_filter[l-1].data[q1]);
 	luminance += tmp * tmp;
 	k++;
       }

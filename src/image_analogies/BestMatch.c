@@ -7,29 +7,28 @@ bruteForceMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyrami
 {
   int index_min = 0;
   int pixel = 0;
-  float dist_min = 0.0;
-  dist_min = dist(0, source, source_filter, q, target, target_filter, l);
+  float dist_min = dist(index_min, source, source_filter, q, target, target_filter, l);  
   
   float d = 0.0;
   for(int i=0; i<source[l].rows; i++){
     for(int j=0; j<source[l].cols; j++){
       pixel = i*source[l].cols+j;
       d = dist(pixel, source, source_filter, q, target, target_filter, l);
-      
+    
       if(d < dist_min){
 	dist_min = d;
 	index_min = pixel;
       }
     }
   }
- 
+  printf("%d ", index_min);
   return index_min;
 }
 
 int
 bestCoherenceMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* target_filter, int l, int q)
 {
-  srand(time(NULL));
+  //srand(time(NULL));
   int pixel, pmin = target_filter[l].s[q], p;
   int i_p1, j_p1;
   float dist_min = dist(pmin, source, source_filter, q, target, target_filter, l);
@@ -46,8 +45,10 @@ bestCoherenceMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyr
       
       p = target_filter[l].s[pixel] -i_p1*source_filter[l].cols-j_p1;
       
-      if(p < 0 || p > source[l].cols * source[l].rows -1)
+      if(p < 0 || p > source[l].cols * source[l].rows -1){
 	p =  rand()%(source_filter[l].cols*source_filter[l].rows);
+	//printf(" %d ", p);
+      }
       
       d = dist(p, source, source_filter, q, target, target_filter, l);
    
@@ -79,7 +80,7 @@ bestMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* tar
     return p_patch;
 #endif
   
-#if 1
+#if 0
   int p_brute = bruteForceMatch(source, source_filter, target, target_filter, l, q);
   int p_coh = bestCoherenceMatch(source, source_filter, target, target_filter, l, q);
 
@@ -100,7 +101,7 @@ bestMatch(Pyramid* source, Pyramid* source_filter, Pyramid* target, Pyramid* tar
    return p_patch;
 #endif
 
-#if 0
+#if 1
    int p_coh = bestCoherenceMatch(source, source_filter, target, target_filter, l, q);
    return p_coh;
 #endif
