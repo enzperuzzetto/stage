@@ -14,7 +14,8 @@ BIN=\
 	random\
 	cannaux\
 	option\
-	texture
+	texture\
+	texture_pyramid
 
 .PHONY: all
 all: $(OBJ) $(BIN)

@@ -6,57 +6,68 @@
 #include "bcl.h"
 #include "conversion.h"
 #include "features.h"
+#include "pyramid.h"
 
 
 float
-dist(int p, float* mean_tex, float* sd_tex, int q, float* meant, float* sdt)
+dist(int tex_cols,int xs, int ys, float* lumtex, float* mean_tex, float* sd_tex, int cols, int rows, int xt, int yt, float* lumt, float* meant, float* sdt, int size, int nb_pass)
 {
+  int begin_t, end_t, istart, iend, jstart, jend;
+  int s = (int)((size-1)/2.0);
+  int p = xs * tex_cols + ys, q = xt * cols + yt, p1, q1 ,k = 0;
+  double lum = 0.0, mean = 0.0, sd = 0.0, tmp;
+  
+  if(xt < s)
+    begin_t = -s + (s - xt);
+  else
+    begin_t = -s;
+  if(xt > rows-1 - s)
+    end_t = s - (xt - (rows-1 - s));
+  else
+    end_t = s;
 
-  float  sd, mean;
-  mean = (mean_tex[p] - meant[q]) *  (mean_tex[p] - meant[q]);
-  sd = (sd_tex[p] - sdt[q]) *  (sd_tex[p] - sdt[q]);
-  return sqrtf( mean + sd);
-}
+  istart = begin_t;
+  iend = end_t;
 
-float
-dist1(int tex_cols,int p, float* lumtex, float* mean_tex, float* sd_tex, int cols, int q, float* lumt, float* meant, float* sdt, int size, int nb)
-{
-  (void)mean_tex;
-  (void)meant;
-  (void)sd_tex;
-  (void)sdt;
-  (void)nb;
-  int i1, j1, p1, q1, k=0;
-  float lum = 0.0, sd, mean;
-  for(int i=0; i< size; i++){
-    for(int j=0; j<size; j++){
-      i1 = i-size/2.0;
-      j1 = j-size/2.0;
+  if(yt < s)
+    begin_t = -s + (s - yt);
+  else
+    begin_t = -s;
+  if(yt > cols-1 - s)
+    end_t = s -(yt - (cols-1 - s));
+  else
+    end_t = s;
 
-      p1 = p + (i1*tex_cols+j1);
-      q1 = q + (i1*cols+j1);
+  jstart = begin_t;
+  jend = end_t;
+  
+  for(int i=istart; i<iend+1; i++){
+    for(int j=jstart; j<jend+1; j++){
 
-      if(p1 < 0 || q1 < 0)
+      p1 = p + (i*tex_cols+j);
+      q1 = q + (i*cols+j);
+           
+      if((p1 == p || q1 == q) && nb_pass == 0)
 	break;
-      if((p1 == p && nb==0) || (q1 == q && nb==0))
-	break;
-
-      lum += (lumtex[p1] -lumt[q1]) * (lumtex[p1] - lumt[q1]);
+     
+      tmp = lumtex[p1] - lumt[q1];
+      lum += tmp * tmp;
       k++;
     }
-    if((p1 == p && nb==0) || (q1 == q && nb==0))
+    if((p1 == p || q1 == q) && nb_pass == 0)
       break;
   }
   
-
-  mean = (mean_tex[p] - meant[q]) *  (mean_tex[p] - meant[q]);
-  sd = (sd_tex[p] - sdt[q]) *  (sd_tex[p] - sdt[q]);
   if(k==0)
-    return 99999999999999999;
-  (void)mean;
-  (void)sd;
-  //printf(" %f ",sd);
-  return sqrt(lum + mean + sd);
+    lum = 99999999999999999;
+
+  tmp = mean_tex[p] - meant[q];
+  mean = tmp * tmp;
+
+  tmp = sd_tex[p] - sdt[q];
+  sd = tmp * tmp;
+  
+  return sqrtf(lum + mean + sd);
 }
       
 
@@ -90,34 +101,36 @@ process(char* texture_name, int cols, int rows, int windowSize)
 
   int q, p,pixel;  
   float d, dist_min;
+  
 #if 0 // Wei and Levoy texture synthesis
+  //bruit blanc
   srand(time(NULL));
+  int val;
   for(int i=0; i<rows; i++){
     for(int j=0; j<cols; j++){
       pixel = rand()%(tex_cols*tex_rows);
-      lum_t[i*cols+j] = lumtex[pixel];
+      val = rand()%256;
+      lum_t[i*cols+j] = val;
       s[i*cols+j] = pixel;
     }
   }
+ 
   for(int k=0; k<1; k++){
     for(int i=0; i<rows; i++){
       for(int j=0; j<cols; j++){
 	q = i*cols+j;
 
-	//if(lum_t[q] == 0){
-
 	meant[q] = mean(cols, rows, lum_t, q, windowSize, 1);
 	sdt[q] =  standard_deviation(cols, rows, lum_t, meant[q], q, windowSize, 1);
 	
 	p = 0;
-	//dist_min = dist(p, meanTex, sdTex, q,  meant, sdt);
-	dist_min = dist1(tex_cols, p, lumtex, meanTex, sdTex, cols, q, lum_t, meant, sdt, windowSize,k);
+	
+	dist_min = dist(tex_cols, 0, 0, lumtex, meanTex, sdTex, cols, rows, i, j, lum_t, meant, sdt, windowSize,k);
 	for(int x=0; x<tex_rows; x++){
 	  for(int y=0; y<tex_cols; y++){
 	    pixel = x*tex_cols+y;
 
-	    //d = dist(pixel, meanTex, sdTex, q,  meant, sdt);
-	    d = dist1(tex_cols, pixel, lumtex, meanTex, sdTex, cols, q, lum_t, meant, sdt, windowSize,k);
+	    d = dist(tex_cols, x, y, lumtex, meanTex, sdTex, cols, rows, i, j, lum_t, meant, sdt, windowSize,k);
 	    if(d < dist_min){
 	      dist_min = d;
 	      p = pixel;
@@ -126,10 +139,8 @@ process(char* texture_name, int cols, int rows, int windowSize)
 	  }
 	}
 
-	printf( " %f %f %f %f\n",meant[q], sdt[q], meanTex[p], sdTex[p]);
 	lum_t[q] = lumtex[p];
 	s[q] = p;
-	// }
       }
     }
   }
@@ -138,14 +149,17 @@ process(char* texture_name, int cols, int rows, int windowSize)
 #if 1 // Ashikhmin texture synthesis
    
   srand(time(NULL));
+  int val;
   for(int i=0; i<rows; i++){
     for(int j=0; j<cols; j++){
       pixel = rand()%(tex_cols*tex_rows);
-      lum_t[i*cols+j] = lumtex[pixel];
+      val = rand()%256;
+      lum_t[i*cols+j] = val;
       s[i*cols+j] = pixel;
     }
   }
-  int i1, j1, pmin;
+  
+  int pmin, xs, ys, start =-(int)(windowSize/2.0), end = (int)(windowSize/2.0);
   for(int k=0; k<1; k++){
     for(int i=0; i<rows; i++){
       for(int j=0; j<cols; j++){
@@ -155,29 +169,33 @@ process(char* texture_name, int cols, int rows, int windowSize)
 	sdt[q] =  standard_deviation(cols, rows, lum_t, meant[q], q, windowSize, 1);
 
 	pmin = s[q];
-	dist_min = dist1(tex_cols, pmin, lumtex, meanTex, sdTex, cols, q, lum_t, meant, sdt, windowSize,k);
+	xs = pmin/tex_cols;
+	ys = pmin - xs * tex_cols;
+	
+	dist_min = dist(tex_cols, xs, ys, lumtex, meanTex, sdTex, cols, rows, i, j, lum_t, meant, sdt, windowSize,k);
       
-	for(int x=0; x<windowSize; x++){
-	  for(int y=0; y<windowSize; y++){
-	    i1 = x - windowSize/2.0;
-	    j1 = y - windowSize/2.0;
-	  
-	    pixel = q + (i1*cols+j1);
+	for(int x=start; x<end+1; x++){
+	  for(int y=start; y<end+1; y++){
+	    
+	    pixel = q + (x*cols+y);
 
-	    if((pixel == q && k==0) || pixel < 0 )
+	    if(pixel == q && k==0) 
 	      break;
+	    if(pixel < 0)
+	      continue;
 
-	    p = s[pixel] - i1*tex_cols-j1;
+	    p = s[pixel] - x*tex_cols-y;
+	    
 	    if( p >= tex_cols * tex_rows || p < 0)
 	      p =  rand()%(tex_cols*tex_rows);
 		
-	    //d = dist(p, meanTex, sdTex, q,  meant, sdt);
-	    d = dist1(tex_cols, p, lumtex, meanTex, sdTex, cols, q, lum_t, meant, sdt, windowSize,k);
+	    xs = p/tex_cols;
+	    ys = p - xs * tex_cols;
+	    
+	    d = dist(tex_cols, xs, ys, lumtex, meanTex, sdTex, cols, rows, i, j, lum_t, meant, sdt, windowSize,k);
 	  
 	    if(d < dist_min){
 	      dist_min = d;
-	      //r = pixel;
-	      //rprime = -i1*tex_cols-j1;
 	      pmin = p;
 	    }
 

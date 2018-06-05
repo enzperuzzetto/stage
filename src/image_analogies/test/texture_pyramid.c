@@ -5,7 +5,7 @@
 
 #include "bcl.h"
 
-#define L 1
+#define L 2
 
 
 typedef struct Pyramid
@@ -106,65 +106,114 @@ pixelL_1(int p, int cols)
 }
 
 float
-dist(int tex_cols,int p, float* Rtex, float* Gtex, float* Btex, int cols, int q, float* Rout, float* Gout, float* Bout, int size, int l)
-{
-  int i1, j1, p1, q1, k=0;
-  float sum=0.0,r, g, b;
-  for(int i=0; i< size; i++){
-    for(int j=0; j<size; j++){
-      i1 = i-size/2.0;
-      j1 = j-size/2.0;
+dist(int tex_cols, int xs, int ys, Pyramid* t, int cols, int rows, int xt, int yt, Pyramid* res, int size, int l)
+{  
+  int begin_t, end_t, istart, iend, jstart, jend;
+  int s = (int)((size-1)/2.0);
+  int p = xs * tex_cols + ys, q = xt * cols + yt, p1, q1 ,k = 0;
+  double r, g, b, sum = 0.0;
+  
+  if(xt < s)
+    begin_t = -s + (s - xt);
+  else
+    begin_t = -s;
+  if(xt > rows-1 - s)
+    end_t = s - (xt - (rows-1 - s));
+  else
+    end_t = s;
 
-      p1 = p + (i1*tex_cols+j1);
-      q1 = q + (i1*cols+j1);
+  istart = begin_t;
+  iend = end_t;
 
-      if(p1 < 0 || q1 < 0)
-	break;
+  if(yt < s)
+    begin_t = -s + (s - yt);
+  else
+    begin_t = -s;
+  if(yt > cols-1 - s)
+    end_t = s -(yt - (cols-1 - s));
+  else
+    end_t = s;
+
+  jstart = begin_t;
+  jend = end_t;
+  
+  for(int i=istart; i<iend+1; i++){
+    for(int j=jstart; j<jend+1; j++){
+
+      p1 = p + (i*tex_cols+j);
+      q1 = q + (i*cols+j);
+           
       if(p1 == p || q1 == q)
 	break;
-      r = (Rtex[p1] - Rout[q1]) * (Rtex[p1] - Rout[q1]);
-      g = (Gtex[p1] - Gout[q1]) * (Gtex[p1] - Gout[q1]);
-      b = (Btex[p1] - Bout[q1]) * (Btex[p1] - Bout[q1]);
+
+      r = (t[l].r[p1] - res[l].r[q1]) * (t[l].r[p1] - res[l].r[q1]);
+      g = (t[l].g[p1] - res[l].g[q1]) * (t[l].g[p1] - res[l].g[q1]);
+      b = (t[l].b[p1] - res[l].b[q1]) * (t[l].b[p1] - res[l].b[q1]);
       sum += r + g + b;
       k++;
     }
     if(p1 == p || q1 == q)
-      break;
+	break;
   }
+
   if(k==0)
     sum = 99999999999999999;
+
+  if(l>0){ // niveau l-1
+    xs /= 2.0;
+    ys /= 2.0;
+    xt /= 2.0;
+    yt /= 2.0;
+    s /= 2.0;
+    tex_cols /= 2.0;
+    cols /= 2.0;
+    rows /= 2.0;
+    p = xs * tex_cols +ys;
+    q = xt * cols + yt;
+    k = 0;
+    
+    if(xt < s)
+      begin_t = -s + (s - xt);
+    else
+      begin_t = -s;
+    if(xt > rows-1 - s)
+      end_t = s - (xt - (rows-1 - s));
+    else
+      end_t = s;
+
+    istart = begin_t;
+    iend = end_t;
+
+    if(yt < s)
+      begin_t = -s + (s - yt);
+    else
+      begin_t = -s;
+    if(yt > cols-1 - s)
+      end_t = s -(yt - (cols-1 - s));
+    else
+      end_t = s;
+
+    jstart = begin_t;
+    jend = end_t;
   
-  if(l > 0){
-    float sum2 =0.0;
-    int q2 = 0.0, p2 = 0.0;
-    q2 = pixelL_1(q, cols);
-    p2 = pixelL_1(p, tex_cols);
-    for(int i=0; i< size; i++){
-      for(int j=0; j<size; j++){
-	i1 = i-size/2.0;
-	j1 = j-size/2.0;
+    for(int i=istart; i<iend+1; i++){
+      for(int j=jstart; j<jend+1; j++){
 
-	p1 = p2 + (i1*tex_cols+j1);
-	q1 = q2 + (i1*cols+j1);
+	p1 = p + (i*tex_cols+j);
+	q1 = q + (i*cols+j);
 
-	if(p1 < 0 || q1 < 0)
-	  break;
-	if(p1 == p || q1 == q)
-	  break;
-	r = (Rtex[p1] - Rout[q1]) * (Rtex[p1] - Rout[q1]);
-	g = (Gtex[p1] - Gout[q1]) * (Gtex[p1] - Gout[q1]);
-	b = (Btex[p1] - Bout[q1]) * (Btex[p1] - Bout[q1]);
-	sum2 += r + g + b;
+	r = (t[l-1].r[p1] - res[l-1].r[q1]) * (t[l-1].r[p1] - res[l-1].r[q1]);
+	g = (t[l-1].g[p1] - res[l-1].g[q1]) * (t[l-1].g[p1] - res[l-1].g[q1]);
+	b = (t[l-1].b[p1] - res[l-1].b[q1]) * (t[l-1].b[p1] - res[l-1].b[q1]);
+	sum += r + g + b;
 	k++;
       }
-      if(p1 == p || q1 == q)
-	break;
     }
-    if(k==0)
-      sum2 = 99999999999999999;
-    sum += sum2;
+
+    if( k==0 )
+      sum = 99999999999999999;
   }
-  
+    
   return sqrtf(sum);
 }
 
@@ -204,7 +253,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
   */
   Pyramid* texture = init_pyramid(tex_cols, tex_rows, 1);
   Pyramid* result = init_pyramid(cols, rows, 1);
-  int cols1, cols2, rows1, rows2, pixel, pmin, i1,j1;
+  int cols1, cols2, rows1, rows2, pixel, pmin;
   //compute pyramid Tex
   
   for(int l=0; l<L;l++){
@@ -220,34 +269,18 @@ process(char* texture_name, int cols, int rows, int windowSize)
       texture[l].g = pyramid_level(tex_cols, tex_rows, Gtex, L-1-l);
       texture[l].b = pyramid_level(tex_cols, tex_rows, Btex, L-1-l);       
     }
-    if(l==0){
-      //int r,g,b;
-      for(int i=0; i<result[l].rows; i++){
-	for(int j=0; j<result[l].cols; j++){
-	  pixel = rand()%(texture[l].cols*texture[l].rows);
-	  //r = rand()%256;
-	  //g = rand()%256;
-	  //b = rand()%256;
-	  result[l].r[i*result[l].cols+j] = Rtex[pixel];
-	  result[l].g[i*result[l].cols+j] = Gtex[pixel];
-	  result[l].b[i*result[l].cols+j] = Btex[pixel];
-	  result[l].s[i*result[l].cols+j] = pixel;
-	}
+    
+    float val;
+    for(int i=0; i<result[l].rows; i++){
+      for(int j=0; j<result[l].cols; j++){
+	pixel = rand()%(texture[l].cols*texture[l].rows);
+	val = rand()%256;
+	result[l].r[i*result[l].cols+j] = val;
+	result[l].g[i*result[l].cols+j] = val;
+	result[l].b[i*result[l].cols+j] = val;
+	result[l].s[i*result[l].cols+j] = pixel;
       }
-    }else{
-      int q2;
-      for(int i=0; i<result[l].rows; i++){
-	for(int j=0; j<result[l].cols; j++){
-	  pixel = i*result[l].cols+j;
-	  q2 = pixelL_1(pixel, result[l].cols);
-	  result[l].r[pixel] = result[l-1].r[q2];
-	  result[l].g[pixel] = result[l-1].g[q2];
-	  result[l].b[pixel] = result[l-1].b[q2];
-	  result[l].s[pixel] = result[l-1].s[q2];
-	}
-      }
-    }
-  
+    }  
     
     printf("LEVEL %d\n",l);
     cols1 = texture[l].cols;
@@ -260,17 +293,18 @@ process(char* texture_name, int cols, int rows, int windowSize)
     for(int i=0; i<rows2; i++){
       for(int j=0; j<cols2; j++){
 	q = i*cols2+j;
-#if 0
+#if 1 //Wei Levoy
 	pmin = 0;
-	dist_min = dist(cols1, pmin, texture[l].r, texture[l].g, texture[l].b, cols2, q, result[l].r, result[l].g, result[l].b, windowSize, l);
+	
+	dist_min = dist(cols1, 0, 0, texture, cols2, rows2, i, j, result, windowSize, l);
 	for(int x=0; x<rows1; x++){
 	  for(int y=0; y<cols1; y++){
 	    pixel = x*cols1+y;
 	    //printf(" %f ", texture[l].b[pixel]);
-	    d =  dist(cols1, pixel, texture[l].r, texture[l].g, texture[l].b, cols2, q, result[l].r, result[l].g, result[l].b, windowSize, l);
-
+	    d =  dist(cols1, x, y, texture, cols2, rows2, i, j, result, windowSize, l);
+       
 	    //printf(" d%f dmin%f p%d pmin%d\n",d, dist_min, pixel, p);
-	    if(d < dist_min){
+	    if(d <= dist_min){
 	      dist_min = d;
 	      pmin = pixel;
 	    }
@@ -278,29 +312,36 @@ process(char* texture_name, int cols, int rows, int windowSize)
 	  }
 	}
 #endif	
-#if 1
+#if 0  // Ashikhmin
+	int xs, ys, start =-(int)(windowSize/2.0), end = (int)(windowSize/2.0);
+	
 	pmin = result[l].s[q];
-	dist_min = dist(cols1, pmin, texture[l].r, texture[l].g, texture[l].b, cols2, q, result[l].r, result[l].g, result[l].b, windowSize, l);
+	xs = pmin/cols1;
+	ys = pmin - xs * cols1;
+	dist_min = dist(cols1, xs, ys, texture, cols2, rows2, i, j, result, windowSize, l);
       
-	for(int x=0; x<windowSize; x++){
-	  for(int y=0; y<windowSize; y++){
-	    i1 = x - windowSize/2.0;
-	    j1 = y - windowSize/2.0;
-	  
-	    pixel = q + (i1*cols2+j1);
+	for(int x=start; x<end+1; x++){
+	  for(int y=start; y<end+1; y++){
+		  
+	    pixel = q + (x*cols2+y);
 
-	    if(pixel == q  || pixel < 0 )
+	    if(pixel == q)
 	      break;
-	      
-	    p = result[l].s[pixel] - i1*cols1-j1;
-	    if( p >= tex_cols * tex_rows || p < 0)
+	    if ( pixel < 0 )
+	      continue;
+	    
+	    p = result[l].s[pixel] - x*cols1-y;
+	    
+	    if( p >= cols1 * rows1 || p < 0)
 	      p =  rand()%(cols1*rows1);
-	      
-	    d = dist(cols1, p, texture[l].r, texture[l].g, texture[l].b, cols2, q, result[l].r, result[l].g, result[l].b, windowSize, l);
+
+	    xs = p/cols1;
+	    ys = p - xs * cols1;
+	    
+	    d = dist(cols1, xs, ys, texture, cols2, rows2, i, j, result, windowSize, l);
 	  
 	    if(d < dist_min){
 	      dist_min = d;
-	      //r = pixel;
 	      pmin = p;
 	    }
 
@@ -308,7 +349,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
 	  if(pixel == q)
 	    break;
 	}
-	#endif
+#endif
 	result[l].r[q] = texture[l].r[pmin];
 	result[l].g[q] = texture[l].g[pmin];
 	result[l].b[q] = texture[l].b[pmin];

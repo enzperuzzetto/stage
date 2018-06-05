@@ -5,26 +5,10 @@
 
 #include "bcl.h"
 
-int
-min(int a, int b)
-{
-  if(a<b)
-    return a;
-  return b;
-}
-
-int
-max(int a, int b)
-{
-  if(a<b)
-    return b;
-  return a;
-}
-
 float
-dist(int tex_cols, int tex_rows, int xs, int ys, float* Rtex, float* Gtex, float* Btex, int cols, int rows, int xt, int yt, float* Rout, float* Gout, float* Bout, int size)
+dist(int tex_cols, int xs, int ys, float* Rtex, float* Gtex, float* Btex, int cols, int rows, int xt, int yt, float* Rout, float* Gout, float* Bout, int size, int nb_pass)
 {
-  int begin_s, begin_t, end_s, end_t, istart, iend, jstart, jend;
+  int begin_t, end_t, istart, iend, jstart, jend;
   int s = (int)((size-1)/2.0);
   int p = xs * tex_cols + ys, q = xt * cols + yt, p1, q1 ,k = 0;
   double r, g, b, sum = 0.0;
@@ -38,17 +22,8 @@ dist(int tex_cols, int tex_rows, int xs, int ys, float* Rtex, float* Gtex, float
   else
     end_t = s;
 
-  if(xs < s)
-    begin_s = -s + (s - xs);
-  else
-    begin_s = -s;
-  if(xs > tex_rows-1 - s)
-    end_s = s - (xs - (tex_rows-1 - s));
-  else
-    end_s = s;
-
-  istart = max(begin_s, begin_t);
-  iend = min(end_s, end_t);
+  istart = begin_t;
+  iend = end_t;
 
   if(yt < s)
     begin_t = -s + (s - yt);
@@ -59,17 +34,8 @@ dist(int tex_cols, int tex_rows, int xs, int ys, float* Rtex, float* Gtex, float
   else
     end_t = s;
 
-  if(ys < s)
-    begin_s = -s + (s - ys);
-  else
-    begin_s = -s;
-  if(ys > tex_cols-1 - s)
-    end_s = s - (ys - (tex_cols-1 - s));
-  else
-    end_s = s;
-
-  jstart = max(begin_s, begin_t);
-  jend = min(end_s, end_t);
+  jstart = begin_t;
+  jend = end_t;
   
   for(int i=istart; i<iend+1; i++){
     for(int j=jstart; j<jend+1; j++){
@@ -77,7 +43,7 @@ dist(int tex_cols, int tex_rows, int xs, int ys, float* Rtex, float* Gtex, float
       p1 = p + (i*tex_cols+j);
       q1 = q + (i*cols+j);
            
-      if(p1 == p || q1 == q)
+      if((p1 == p || q1 == q) && nb_pass == 0)
 	break;
      
       r = (Rtex[p1] - Rout[q1]) * (Rtex[p1] - Rout[q1]);
@@ -86,7 +52,7 @@ dist(int tex_cols, int tex_rows, int xs, int ys, float* Rtex, float* Gtex, float
       sum += r + g + b;
       k++;
     }
-    if(p1 == p || q1 == q)
+    if((p1 == p || q1 == q) && nb_pass == 0)
       break;
   }
   
@@ -96,68 +62,6 @@ dist(int tex_cols, int tex_rows, int xs, int ys, float* Rtex, float* Gtex, float
   return sqrtf(sum);
   
   
-}
-
-float
-compare_neigh(int tex_cols,int p, float* Rtex, float* Gtex, float* Btex, int cols, int q, float* Rout, float* Gout, float* Bout, int size)
-{
-  int  p1, q1, k=0;
-  float sum=0.0,r, g, b;
-  int start = -(int)(size/2.0), end = (int)(size/2.0);
-  for(int i=start; i<end+1; i++){
-    for(int j=start; j<end+1; j++){
-
-      p1 = p + (i*tex_cols+j);
-      q1 = q + (i*cols+j);
-           
-      if(p1 == p || q1 == q)
-	break;
-      
-      if(p1 >=0 && q1 >=0){
-	r = (Rtex[p1] - Rout[q1]) * (Rtex[p1] - Rout[q1]);
-	g = (Gtex[p1] - Gout[q1]) * (Gtex[p1] - Gout[q1]);
-	b = (Btex[p1] - Bout[q1]) * (Btex[p1] - Bout[q1]);
-	sum += r + g + b;
-	k++;
-      }
-      
-    }
-    if(p1 == p || q1 == q)
-      break;
-  }
-  
-  if(k==0)
-    sum = 99999999999999999;
-  
-  return sqrtf(sum);
-}
-
-float
-compare_full_neigh(int tex_cols,int p, float* Rtex, float* Gtex, float* Btex, int cols, int q, float* Rout, float* Gout, float* Bout, int size)
-{
-  int  p1, q1, k=0;
-  float sum=0.0,r, g, b;
-  int start = -(int)(size/2.0), end = (int)(size/2.0);
-  for(int i=start; i<end+1; i++){
-    for(int j=start; j<end+1; j++){
-
-      p1 = p + (i*tex_cols+j);
-      q1 = q + (i*cols+j);
-                 
-      if(p1 >=0 && q1 >=0){
-	r = (Rtex[p1] - Rout[q1]) * (Rtex[p1] - Rout[q1]);
-	g = (Gtex[p1] - Gout[q1]) * (Gtex[p1] - Gout[q1]);
-	b = (Btex[p1] - Bout[q1]) * (Btex[p1] - Bout[q1]);
-	sum += r + g + b;
-	k++;
-      }
-      
-    }
-  }
-  if(k==0)
-    sum = 99999999999999999;
-  
-  return sqrtf(sum);
 }
 
 void
@@ -196,51 +100,37 @@ process(char* texture_name, int cols, int rows, int windowSize)
   
   int pixel, q, p;
   float dist_min, d;
-#if 1 // Wei and Levoy texture synthesis
+#if 0 // Wei and Levoy texture synthesis
 
-#if 1
+  //bruit blanc
   srand(time(NULL));
+  int val;
   for(int i=0; i<rows; i++){
     for(int j=0; j<cols; j++){
       pixel = rand()%(tex_cols*tex_rows);
-      Rout[i*cols+j] = Rtex[pixel];
-      Gout[i*cols+j] = Gtex[pixel];
-      Bout[i*cols+j] = Btex[pixel];
+      val = rand()%256;
+      Rout[i*cols+j] = val;
+      Gout[i*cols+j] = val;
+      Bout[i*cols+j] = val;
       s[i*cols+j] = pixel;
     }
   }
-#endif
-#if 0 //bruit blanc
-  srand(time(NULL));
-  int r, g, b;
-  for(int i=0; i<rows; i++){
-    for(int j=0; j<cols; j++){
-      pixel = rand()%(tex_cols*tex_rows);
-      r = rand()%256;
-      g = rand()%256;
-      b = rand()%256;
-      Rout[i*cols+j] = r;
-      Gout[i*cols+j] = g;
-      Bout[i*cols+j] = b;
-      s[i*cols+j] = pixel;
-    }
-  }
-#endif
+
   for(int k=0; k<1;k++){ // nb passes
     for(int i=0; i<rows; i++){
       for(int j=0; j<cols; j++){
 	q = i*cols+j;
-	
+
+       
 	p = 0;
-	//dist_min = compare_neigh(tex_cols, p, Rtex, Gtex, Btex,cols, q, Rout, Gout, Bout, windowSize);
-	dist_min = dist(tex_cols, tex_rows, 0, 0, Rtex, Gtex, Btex, cols, rows, i, j, Rout, Gout, Bout, windowSize);
+	
+	dist_min = dist(tex_cols,  0, 0, Rtex, Gtex, Btex, cols, rows, i, j, Rout, Gout, Bout, windowSize,k);
 	for(int x=0; x<tex_rows; x++){
 	  for(int y=0; y<tex_cols; y++){
 	    pixel = x*tex_cols+y;
 
-	    //d =  compare_neigh(tex_cols, pixel, Rtex, Gtex, Btex,cols, q, Rout, Gout, Bout, windowSize);
-	    d = dist(tex_cols, tex_rows, x, y, Rtex, Gtex, Btex, cols, rows, i, j, Rout, Gout, Bout, windowSize);
-	    //printf("%d: %d %f %d %f\n", q, p, dist_min, pixel, d);
+	    d = dist(tex_cols, x, y, Rtex, Gtex, Btex, cols, rows, i, j, Rout, Gout, Bout, windowSize,k);
+	
 	    if(d <= dist_min){
 	      dist_min = d;
 	      p = pixel;
@@ -258,47 +148,55 @@ process(char* texture_name, int cols, int rows, int windowSize)
   }
 #endif
 
-#if 0 // Ashikhmin texture synthesis
+#if 1 // Ashikhmin texture synthesis
    
   srand(time(NULL));
+  int val;
   for(int i=0; i<rows; i++){
     for(int j=0; j<cols; j++){
       pixel = rand()%(tex_cols*tex_rows);
-      Rout[i*cols+j] = Rtex[pixel];
-      Gout[i*cols+j] = Gtex[pixel];
-      Bout[i*cols+j] = Btex[pixel];
+      val = rand()%256;
+      Rout[i*cols+j] = val;
+      Gout[i*cols+j] = val;
+      Bout[i*cols+j] = val;
       s[i*cols+j] = pixel;
     }
   }
-  int i1, j1, pmin;// r, rprim, 
+  
+  int pmin, xs, ys, start =-(int)(windowSize/2.0), end = (int)(windowSize/2.0);
   for(int k=0; k<1; k++){
     for(int i=0; i<rows; i++){
       for(int j=0; j<cols; j++){
 	q = i*cols+j;
 
-
 	pmin = s[q];
-	dist_min = compare_neigh(tex_cols, pmin, Rtex, Gtex, Btex,cols, q, Rout, Gout, Bout, windowSize);
+	xs = pmin/tex_cols;
+	ys = pmin - xs * tex_cols;
+ 
+	dist_min = dist(tex_cols, xs, ys, Rtex, Gtex, Btex, cols, rows, i, j, Rout, Gout, Bout, windowSize,k);
       
-	for(int x=0; x<windowSize; x++){
-	  for(int y=0; y<windowSize; y++){
-	    i1 = x - windowSize/2.0;
-	    j1 = y - windowSize/2.0;
-	  
-	    pixel = q + (i1*cols+j1);
+	for(int x=start; x<end+1; x++){
+	  for(int y=start; y<end+1; y++){
+	    
+	    pixel = q + (x*cols+y);
 
-	    if((pixel == q && k==0) || pixel < 0 )
+	    if(pixel == q && k==0)
 	      break;
-	      
-	    p = s[pixel] - i1*tex_cols-j1;
+	    if( pixel < 0 )
+	      continue;
+	    
+	    p = s[pixel] - x*tex_cols-y;
+	    
 	    if( p >= tex_cols * tex_rows || p < 0)
 	      p =  rand()%(tex_cols*tex_rows);
-	      
-	    d =  compare_neigh(tex_cols, p, Rtex, Gtex, Btex,cols, q, Rout, Gout, Bout, windowSize);
-	  
+
+	    xs = p/tex_cols;
+	    ys = p - xs * tex_cols;
+	    
+	    d = dist(tex_cols,  xs, ys, Rtex, Gtex, Btex, cols, rows, i, j, Rout, Gout, Bout, windowSize,k);
+	    
 	    if(d < dist_min){
 	      dist_min = d;
-	      //r = pixel;
 	      pmin = p;
 	    }
 
@@ -348,7 +246,19 @@ process(char* texture_name, int cols, int rows, int windowSize)
 
   pnm_save(imt, PnmRawPpm, "syn.ppm");
   
-  
+
+  free(s);
+  free(Bout);
+  free(Gout);
+  free(Rout);
+  free(Rtex);
+  free(Gtex);
+  free(Btex);
+  free(Redtex);
+  free(Greentex);
+  free(Bluetex);
+  pnm_free(imt);
+  pnm_free(ims);
 }
 
 
