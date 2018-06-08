@@ -15,8 +15,11 @@ dist(int tex_cols,int xs, int ys, float* lumtex, float* mean_tex, float* sd_tex,
   int begin_t, end_t, istart, iend, jstart, jend;
   int s = (int)((size-1)/2.0);
   int p = xs * tex_cols + ys, q = xt * cols + yt, p1, q1 ,k = 0;
-  double lum = 0.0, mean = 0.0, sd = 0.0, tmp;
-  
+  double lum = 0.0, tmp;//mean = 0.0, sd = 0.0, tmp;
+  (void)mean_tex;
+  (void)meant;
+  (void)sd_tex;
+  (void)sdt;
   if(xt < s)
     begin_t = -s + (s - xt);
   else
@@ -61,13 +64,13 @@ dist(int tex_cols,int xs, int ys, float* lumtex, float* mean_tex, float* sd_tex,
   if(k==0)
     lum = 99999999999999999;
 
-  tmp = mean_tex[p] - meant[q];
+  /*tmp = mean_tex[p] - meant[q];
   mean = tmp * tmp;
 
   tmp = sd_tex[p] - sdt[q];
-  sd = tmp * tmp;
+  sd = tmp * tmp;*/
   
-  return sqrtf(lum + mean + sd);
+  return sqrtf(lum); //+ mean + sd);
 }
       
 

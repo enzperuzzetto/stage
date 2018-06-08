@@ -45,6 +45,8 @@ dist(int tex_cols, int xs, int ys, float* Rtex, float* Gtex, float* Btex, int co
            
       if((p1 == p || q1 == q) && nb_pass == 0)
 	break;
+      if(p1 <0)
+	continue;
      
       r = (Rtex[p1] - Rout[q1]) * (Rtex[p1] - Rout[q1]);
       g = (Gtex[p1] - Gout[q1]) * (Gtex[p1] - Gout[q1]);

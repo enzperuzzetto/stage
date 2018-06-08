@@ -303,7 +303,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
 	  for(int y=0; y<cols1; y++){
 	    pixel = x*cols1+y;
 	    //printf(" %f ", texture[l].b[pixel]);
-	    fprintf(stderr," %d, %d %d %d\n",x, y, cols1, rows1);
+	    //fprintf(stderr," %d, %d %d %d\n",x, y, cols1, rows1);
 	    d =  dist(cols1, x, y, texture, cols2, rows2, i, j, result, windowSize, l);
 	    //fprintf(stderr," %d, %d %d %d\n",x, y, cols1, rows1);
 	    //printf(" d%f dmin%f p%d pmin%d\n",d, dist_min, pixel, p);
