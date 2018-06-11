@@ -443,9 +443,26 @@ filtre(char* source_name, char* source_filtre_name, char* target_name, int size)
   printf("CONVERSION\n");
   Bcols = Bprim[L-1].cols;
   Brows = Bprim[L-1].rows;
+#if 1
   float* it = channel(Bcols, Brows, t_yiq, 1);
   float* qt = channel(Bcols, Brows, t_yiq, 2);
+#endif
+#if 0
+  float* isf = channel(A[L-1].cols, A[L-1].rows, sf_yiq, 1);
+  float* qsf = channel(A[L-1].cols, A[L-1].rows, sf_yiq, 2);
+  
+  float* it = malloc(sizeof(float) * Bcols * Brows);
+  float* qt = malloc(sizeof(float) * Bcols * Brows);
 
+  for(int i=0; i<Brows; i++){
+    for(int j=0; j<Bcols; j++){
+      pixel = Bprim[L-1].s[i*Bcols+j];
+      //printf("%d ",pixel);
+      it[i*Bcols+j] = isf[pixel];
+      qt[i*Bcols+j] = qsf[pixel];
+    }
+  }
+#endif
   float* yiq = putChannel(Bcols, Brows, Bprim[L-1].lum, it, qt);
 
   float* rgb = convertYIQ2RGB(Bcols, Brows, yiq);
