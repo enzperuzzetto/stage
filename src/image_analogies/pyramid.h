@@ -2,8 +2,8 @@
 #define __PYRAMID_H__
 
 
-#define K 0.5
-#define L 3
+#define K 0.0
+#define L 1
 
 
 /**

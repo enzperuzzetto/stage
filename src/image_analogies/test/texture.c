@@ -4,9 +4,9 @@
 #include <time.h>
 
 #include "bcl.h"
-
+/*
 float
-dist(int tex_cols, int xs, int ys, float* Rtex, float* Gtex, float* Btex, int cols, int rows, int xt, int yt, float* Rout, float* Gout, float* Bout, int size, int nb_pass)
+dist(int tex_cols, int tex_rows, int xs, int ys, float* Rtex, float* Gtex, float* Btex, int cols, int rows, int xt, int yt, float* Rout, float* Gout, float* Bout, int size, int nb_pass)
 {
   int begin_t, end_t, istart, iend, jstart, jend;
   int s = (int)((size-1)/2.0);
@@ -42,20 +42,26 @@ dist(int tex_cols, int xs, int ys, float* Rtex, float* Gtex, float* Btex, int co
 
       p1 = p + (i*tex_cols+j);
       q1 = q + (i*cols+j);
-           
-      if((p1 == p || q1 == q) && nb_pass == 0)
-	break;
-      if(p1 <0)
-	continue;
-     
+
+      if(istart == -s && jstart == -s && iend == s && jend == s){	
+	if((p1 == p || q1 == q) && nb_pass == 0)
+	  break;
+      }
+      if(p1 < 0 )
+	p1 = tex_cols*tex_rows + p1;
+      if(p1 >= tex_cols*tex_rows)
+	p1 = p1 - tex_cols*tex_rows;
+      
       r = (Rtex[p1] - Rout[q1]) * (Rtex[p1] - Rout[q1]);
       g = (Gtex[p1] - Gout[q1]) * (Gtex[p1] - Gout[q1]);
       b = (Btex[p1] - Bout[q1]) * (Btex[p1] - Bout[q1]);
       sum += r + g + b;
       k++;
     }
+    if(istart == -s && jstart == -s && iend == s && jend == s){
     if((p1 == p || q1 == q) && nb_pass == 0)
       break;
+    }
   }
   
   if(k==0)
@@ -65,6 +71,58 @@ dist(int tex_cols, int xs, int ys, float* Rtex, float* Gtex, float* Btex, int co
   
   
 }
+*/
+
+float
+dist(int tex_cols, int tex_rows, int xs, int ys, float* Rtex, float* Gtex, float* Btex, int cols, int rows, int xt, int yt, float* Rout, float* Gout, float* Bout, int size, int nb_pass)
+{
+  int s = (int)(size/2.0);
+  int ip, jp, iq, jq, p1, q1, q = xt*cols+yt;
+  float r, b, g, sum = 0.0;
+  
+  for(int i=-s; i<s+1; i++){
+    for(int j=-s; j<s+1; j++){
+      ip = xs + i;
+      jp = ys + j;
+      iq = xt + i;
+      jq = yt + j;
+
+      if(ip < 0)
+	ip = tex_rows - ip;
+      if(jp < 0)
+	jp = tex_cols - jp;
+      if(ip > tex_rows-1)
+	ip -= tex_rows;
+      if(jp > tex_cols-1)
+	jp-= tex_cols;
+
+      if(iq < 0)
+	iq = rows - iq;
+      if(jq < 0)
+	jq = cols - jq;
+      if(iq > rows-1)
+	iq -= rows;
+      if(jq > cols-1)
+	jq -= cols;
+
+      p1 = ip*tex_cols+jp;
+      q1 = iq*cols+jq;
+
+      if((q1 == q) && nb_pass == 0)
+	break;
+
+      r = (Rtex[p1] - Rout[q1]) * (Rtex[p1] - Rout[q1]);
+      g = (Gtex[p1] - Gout[q1]) * (Gtex[p1] - Gout[q1]);
+      b = (Btex[p1] - Bout[q1]) * (Btex[p1] - Bout[q1]);
+      sum += r + g + b;
+    }
+    if((q1 == q) && nb_pass == 0)
+      break;
+  }
+
+  return sum;
+}
+      
 
 void
 process(char* texture_name, int cols, int rows, int windowSize)
@@ -102,7 +160,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
   
   int pixel, q, p;
   float dist_min, d;
-#if 0 // Wei and Levoy texture synthesis
+#if 1 // Wei and Levoy texture synthesis
 
   //bruit blanc
   srand(time(NULL));
@@ -118,7 +176,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
     }
   }
 
-  for(int k=0; k<1;k++){ // nb passes
+  for(int k=0; k<2;k++){ // nb passes
     for(int i=0; i<rows; i++){
       for(int j=0; j<cols; j++){
 	q = i*cols+j;
@@ -126,12 +184,12 @@ process(char* texture_name, int cols, int rows, int windowSize)
        
 	p = 0;
 	
-	dist_min = dist(tex_cols,  0, 0, Rtex, Gtex, Btex, cols, rows, i, j, Rout, Gout, Bout, windowSize,k);
+	dist_min = dist(tex_cols, tex_rows,  0, 0, Rtex, Gtex, Btex, cols, rows, i, j, Rout, Gout, Bout, windowSize,k);
 	for(int x=0; x<tex_rows; x++){
 	  for(int y=0; y<tex_cols; y++){
 	    pixel = x*tex_cols+y;
 
-	    d = dist(tex_cols, x, y, Rtex, Gtex, Btex, cols, rows, i, j, Rout, Gout, Bout, windowSize,k);
+	    d = dist(tex_cols, tex_rows, x, y, Rtex, Gtex, Btex, cols, rows, i, j, Rout, Gout, Bout, windowSize,k);
 	
 	    if(d <= dist_min){
 	      dist_min = d;
@@ -150,7 +208,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
   }
 #endif
 
-#if 1 // Ashikhmin texture synthesis
+#if 0 // Ashikhmin texture synthesis
    
   srand(time(NULL));
   int val;
@@ -166,7 +224,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
   }
   
   int pmin, xs, ys, start =-(int)(windowSize/2.0), end = (int)(windowSize/2.0);
-  for(int k=0; k<1; k++){
+  for(int k=0; k<2; k++){
     for(int i=0; i<rows; i++){
       for(int j=0; j<cols; j++){
 	q = i*cols+j;
@@ -175,7 +233,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
 	xs = pmin/tex_cols;
 	ys = pmin - xs * tex_cols;
  
-	dist_min = dist(tex_cols, xs, ys, Rtex, Gtex, Btex, cols, rows, i, j, Rout, Gout, Bout, windowSize,k);
+	dist_min = dist(tex_cols, tex_rows, xs, ys, Rtex, Gtex, Btex, cols, rows, i, j, Rout, Gout, Bout, windowSize,k);
       
 	for(int x=start; x<end+1; x++){
 	  for(int y=start; y<end+1; y++){
@@ -195,7 +253,7 @@ process(char* texture_name, int cols, int rows, int windowSize)
 	    xs = p/tex_cols;
 	    ys = p - xs * tex_cols;
 	    
-	    d = dist(tex_cols,  xs, ys, Rtex, Gtex, Btex, cols, rows, i, j, Rout, Gout, Bout, windowSize,k);
+	    d = dist(tex_cols, tex_rows,  xs, ys, Rtex, Gtex, Btex, cols, rows, i, j, Rout, Gout, Bout, windowSize,k);
 	    
 	    if(d < dist_min){
 	      dist_min = d;

@@ -6,7 +6,7 @@
 #include <bcl.h>
 
 #define PATCH 5
-#define NB_MAX_ITER 7
+#define NB_MAX_ITER 5
 #define ALPHA 0.5
 
 int
@@ -191,27 +191,52 @@ process(char *ims_name, char *imt_name )
     }
   }
 
+  int* nnf = initialisation(cols_s, rows_s, cols_t, rows_t);
+  
   for(int i=0; i<NB_MAX_ITER; i++){
-    //initialisation
-    int* nnf = initialisation(cols_s, rows_s, cols_t, rows_t);
+    //initialisation 
     int p, q;
-    for(int x=0; x<rows_s; x++){
-      for(int y=0; y<cols_s; y++){
-	p = x*cols_s+y;
-	q = iteration(cols_s, rows_s, A_r, cols_t, rows_t, B_r, p, nnf);
-	if( i > 0){
-	  if( dist(p, A_r, q, B_r) < dist(p, A_r, p, out_r))
+    if(i%2 == 0){//top to bot
+      for(int x=0; x<rows_s; x++){
+	for(int y=0; y<cols_s; y++){
+	  p = x*cols_s+y;
+	  q = iteration(cols_s, rows_s, A_r, cols_t, rows_t, B_r, p, nnf);
+	  if( i > 0){
+	    if( dist(p, A_r, q, B_r) < dist(p, A_r, p, out_r)){
 	      out_r[p] = B_r[q];
+	      nnf[p] = q;
+	    }
+	    
 	  
+	  }
+	  else{
+	    out_r[p] = B_r[q];
+	    nnf[p] = q;
+	  }
 	}
-	else{
-	  out_r[p] = B_r[q];
+      }
+    }else{//bot to top
+      for(int x=rows_s-1; x>=0; x--){
+	for(int y=cols_s-1; y>=0; y--){
+	  p = x*cols_s+y;
+	  q = iteration(cols_s, rows_s, A_r, cols_t, rows_t, B_r, p, nnf);
+	  if( i > 0){
+	    if( dist(p, A_r, q, B_r) < dist(p, A_r, p, out_r)){
+	      out_r[p] = B_r[q];
+	      nnf[p] = q;
+	    }
+	  
+	  }
+	  else{
+	    out_r[p] = B_r[q];
+	    nnf[p] = q;
+	  }
 	}
       }
     }
-    free(nnf);
   }
-  
+
+  free(nnf);
   float val;
   for(int j=0; j<cols_s; j++){
     for(int i=0; i<rows_s; i++){

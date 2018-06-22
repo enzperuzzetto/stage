@@ -54,7 +54,158 @@ free_pyramid_transfert(Pyramid* pyramid)
 }
 
 //####################################################################################################################
+float
+dist_transfert(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, int w)
+{
+   int s = (int)(size/2.0);
+   int Acols, Arows, Bcols, Brows, ip, jp, iq, jq, p1, q1, q, k=0;
+   float lum1 = 0.0, lum2 = 0.0, d = 0.0, dprim = 0.0, tmp;
 
+   Acols = A[l].cols;
+   Arows = A[l].rows;
+   Bcols = B[l].cols;
+   Brows = B[l].rows;
+   q = xt*Bcols+yt;
+
+   for(int i=-1; i<2; i++){
+    for(int j=-1; j<2; j++){
+      ip = xs + i;
+      jp = ys + j;
+      iq = xt + i;
+      jq = yt + j;
+
+      if(ip < 0)
+	ip = Arows - ip;
+      if(jp < 0)
+	jp = Acols - jp;
+      if(ip > Arows-1)
+	ip -= Arows;
+      if(jp > Acols-1)
+	jp-= Acols;
+
+      if(iq < 0)
+	iq = Brows - iq;
+      if(jq < 0)
+	jq = Bcols - jq;
+      if(iq > Brows-1)
+	iq -= Brows;
+      if(jq > Bcols-1)
+	jq -= Bcols;
+
+      p1 = ip*Acols+jp;
+      q1 = iq*Bcols+jq;
+      /*
+      if((q1 == q) && nb_pass == 0)
+	break;
+      */
+      tmp = A[l].lum[p1] - B[l].lum[q1];
+      lum1 += tmp * tmp;
+      k++;
+    }
+   }
+
+   d = lum1 / (float)k;
+
+   k=0;
+
+   for(int i=-s; i<s+1; i++){
+    for(int j=-s; j<s+1; j++){
+      ip = xs + i;
+      jp = ys + j;
+      iq = xt + i;
+      jq = yt + j;
+
+      if(ip < 0)
+	ip = Arows - ip;
+      if(jp < 0)
+	jp = Acols - jp;
+      if(ip > Arows-1)
+	ip -= Arows;
+      if(jp > Acols-1)
+	jp-= Acols;
+
+      if(iq < 0)
+	iq = Brows - iq;
+      if(jq < 0)
+	jq = Bcols - jq;
+      if(iq > Brows-1)
+	iq -= Brows;
+      if(jq > Bcols-1)
+	jq -= Bcols;
+
+      p1 = ip*Acols+jp;
+      q1 = iq*Bcols+jq;
+      
+      if(q1 == q)// && nb_pass == 0)
+	break;
+
+      tmp = Aprim[l].lum[p1] - Bprim[l].lum[q1];
+      lum2 += tmp * tmp;
+      k++;
+    }
+     if(q1 == q)// && nb_pass == 0)
+	break;
+   }
+
+   dprim = lum2 /(float)k;
+   
+   if(l>0){
+     xs /= 2.0;
+     ys /= 2.0;
+     xt /= 2.0;
+     yt /= 2.0;
+     s  /= 2.0;
+     Acols /= 2.0;
+     Arows /= 2.0;
+     Bcols /= 2.0;
+     Brows /= 2.0;
+     k = 0;
+     lum1 = 0.0;
+     lum2 = 0.0;
+
+     for(int i=-s; i<s+1; i++){
+       for(int j=-s; j<s+1; j++){
+	 ip = xs + i;
+	 jp = ys + j;
+	 iq = xt + i;
+	 jq = yt + j;
+
+	 if(ip < 0)
+	   ip = Arows - ip;
+	 if(jp < 0)
+	   jp = Acols - jp;
+	 if(ip > Arows-1)
+	   ip -= Arows;
+	 if(jp > Acols-1)
+	   jp-= Acols;
+
+	 if(iq < 0)
+	   iq = Brows - iq;
+	 if(jq < 0)
+	   jq = Bcols - jq;
+	 if(iq > Brows-1)
+	   iq -= Brows;
+	 if(jq > Bcols-1)
+	   jq -= Bcols;
+
+	 p1 = ip*Acols+jp;
+	 q1 = iq*Bcols+jq;
+
+	 tmp = A[l-1].lum[p1] - B[l-1].lum[q1];
+	 lum1 += tmp * tmp;
+	 tmp = Aprim[l-1].lum[p1] - Bprim[l-1].lum[q1];
+	 lum2 += tmp * tmp;
+	 k++;
+       }
+     }
+
+     d += lum1/(float)k;
+     dprim += lum2/(float)k;
+   }
+   //printf(" %f %f\n ",d ,dprim);
+   return w*d + (1-w)*dprim;
+}
+/*
 float
 dist_transfert(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, int w)
 {
@@ -145,7 +296,7 @@ dist_transfert(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyram
   
   /*tmp = Aprim[l].lum[p] - Bprim[l].lum[q];
     lum = tmp * tmp;
-  */
+  //
   tmp = Aprim[l].mean[p] - Bprim[l].mean[q];
   mean = tmp * tmp;
 
@@ -204,7 +355,7 @@ dist_transfert(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyram
     */
     /* tmp = Aprim[l-1].lum[p2] - Bprim[l-1].lum[q2];
        lum += tmp * tmp;
-    */
+    //
     tmp = Aprim[l-1].mean[p2] - Bprim[l-1].mean[q2];
     mean += tmp * tmp;
 
@@ -217,7 +368,7 @@ dist_transfert(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyram
   return  w * d + dprim;
 }
 
-
+*/
 int
 WeiLevoy_transfert(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, int w)
 {

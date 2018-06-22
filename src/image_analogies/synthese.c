@@ -48,7 +48,113 @@ free_pyramid(Pyramid* pyramid)
 }
 
 //###############################################################################################################################
+float
+dist(int xs, int ys, Pyramid* texture, int xt, int yt, Pyramid* result, int l, int size, int nbpass)
+{
+  int s = (int)(size/2.0);
+  int Acols, Arows, Bcols, Brows, ip, jp, iq, jq, p1, q1, q, k=0;
+  float lum1 = 0.0, lum2=0.0, tmp;
 
+  Acols = texture[l].cols;
+  Arows = texture[l].rows;
+  Bcols = result[l].cols;
+  Brows = result[l].rows;
+  q = xt*Bcols+yt;
+
+  for(int i=-s; i<s+1; i++){
+    for(int j=-s; j<s+1; j++){
+      ip = xs + i;
+      jp = ys + j;
+      iq = xt + i;
+      jq = yt + j;
+
+      if(ip < 0)
+	ip = Arows - ip;
+      if(jp < 0)
+	jp = Acols - jp;
+      if(ip > Arows-1)
+	ip -= Arows;
+      if(jp > Acols-1)
+	jp -= Acols;
+
+      if(iq < 0)
+	iq = Brows - iq;
+      if(jq < 0)
+	jq = Bcols - jq;
+      if(iq > Brows-1)
+	iq -= Brows;
+      if(jq > Bcols-1)
+	jq -= Bcols;
+
+      p1 = ip*Acols+jp;
+      q1 = iq*Bcols+jq;
+
+      if((q1 == q) && nbpass == 0)
+	break;
+      
+      tmp = texture[l].lum[p1] - result[l].lum[q1];
+      lum1 += tmp * tmp;
+      k++;
+    }
+    if((q1 == q) && nbpass == 0)
+	break;
+  }
+
+  //lum1 /= (float)k;
+   
+  if(l>0){
+    xs /= 2.0;
+    ys /= 2.0;
+    xt /= 2.0;
+    yt /= 2.0;
+    s  /= 2.0;
+    Acols /= 2.0;
+    Arows /= 2.0;
+    Bcols /= 2.0;
+    Brows /= 2.0;
+    k = 0;
+
+    for(int i=-s; i<s+1; i++){
+      for(int j=-s; j<s+1; j++){
+	ip = xs + i;
+	jp = ys + j;
+	iq = xt + i;
+	jq = yt + j;
+
+	if(ip < 0)
+	  ip = Arows - ip;
+	if(jp < 0)
+	  jp = Acols - jp;
+	if(ip > Arows-1)
+	  ip -= Arows;
+	if(jp > Acols-1)
+	  jp-= Acols;
+
+	if(iq < 0)
+	  iq = Brows - iq;
+	if(jq < 0)
+	  jq = Bcols - jq;
+	if(iq > Brows-1)
+	  iq -= Brows;
+	if(jq > Bcols-1)
+	  jq -= Bcols;
+
+	p1 = ip*Acols+jp;
+	q1 = iq*Bcols+jq;
+
+	tmp = texture[l-1].lum[p1] - result[l-1].lum[q1];
+	lum2 += tmp * tmp;
+	k++;
+      }
+    }
+
+    //lum2 /= (float)k;
+  }
+
+  return lum1 + lum2;
+}
+	 
+/*
 float
 dist(int xs, int ys, Pyramid* texture, int xt, int yt, Pyramid* result, int l, int size)
 {
@@ -91,9 +197,9 @@ dist(int xs, int ys, Pyramid* texture, int xt, int yt, Pyramid* result, int l, i
       if(p1 == p || q1 == q)
 	break;
 
-      /*if(p1 < 0)
+      if(p1 < 0)
 	continue;
-      */
+      
       if(p1 < 0 ){
 	//p1 = -p1;
 	
@@ -170,22 +276,22 @@ dist(int xs, int ys, Pyramid* texture, int xt, int yt, Pyramid* result, int l, i
       
   return sqrtf(lum);
 }
-
+*/
 int
-WeiLevoy(Pyramid* texture, int xt, int yt, Pyramid* result, int l, int size)
+WeiLevoy(Pyramid* texture, int xt, int yt, Pyramid* result, int l, int size, int nbpass)
 {
   float dist_min, d;
   int pmin=0, p, rtex, ctex;
   rtex = texture[l].rows;
   ctex = texture[l].cols;
   
-  dist_min = dist(0, 0, texture, xt, yt, result, l, size);
+  dist_min = dist(0, 0, texture, xt, yt, result, l, size, nbpass);
   
   for(int i=0; i<rtex; i++){
     for(int j=0; j<ctex; j++){
       p = i*ctex+j;
 
-      d = dist(i, j, texture, xt, yt, result, l, size);
+      d = dist(i, j, texture, xt, yt, result, l, size, nbpass);
       if(d <= dist_min){
 	dist_min = d;
 	pmin = p;
@@ -198,7 +304,7 @@ WeiLevoy(Pyramid* texture, int xt, int yt, Pyramid* result, int l, int size)
 }
 
 int
-Ashikhmin(Pyramid* texture, int xt, int yt, Pyramid* result, int l, int size)
+Ashikhmin(Pyramid* texture, int xt, int yt, Pyramid* result, int l, int size, int nbpass)
 {
   float dist_min, d;
   int pmin, p, pixel, q, ctex,rtex, cout, xs, ys, start, end;
@@ -213,7 +319,7 @@ Ashikhmin(Pyramid* texture, int xt, int yt, Pyramid* result, int l, int size)
   xs = pmin/ctex;
   ys = pmin - xs * ctex;
 
-  dist_min = dist(xs, ys, texture, xt, yt, result, l, size);
+  dist_min = dist(xs, ys, texture, xt, yt, result, l, size, nbpass);
   
   for(int i=start; i<end+1; i++){
     for(int j=start; j<end+1; j++){
@@ -232,7 +338,7 @@ Ashikhmin(Pyramid* texture, int xt, int yt, Pyramid* result, int l, int size)
       xs = p/ctex;
       ys = p - xs * ctex;
 
-      d = dist(xs, ys, texture, xt, yt, result, l, size);
+      d = dist(xs, ys, texture, xt, yt, result, l, size,nbpass);
 
       if(d <= dist_min){
 	dist_min = d;
@@ -249,26 +355,25 @@ Ashikhmin(Pyramid* texture, int xt, int yt, Pyramid* result, int l, int size)
 
 
 int
-BestMatch(Pyramid* texture, int xt, int yt, Pyramid* result, int l, int size)
+BestMatch(Pyramid* texture, int xt, int yt, Pyramid* result, int l, int size,int nbpass)
 {
   int p_brute, p_coh, x, y;
   float dist_brute, dist_coh;
-  
-  p_brute = WeiLevoy(texture, xt, yt, result, l, size);
+  /*
+  p_brute = WeiLevoy(texture, xt, yt, result, l, size, nbpass);
   x = p_brute/texture[l].cols;
   y = p_brute - x * texture[l].cols;
-  dist_brute = dist(x, y, texture, xt, yt, result, l, size);
-  
-  p_coh = Ashikhmin(texture, xt, yt, result, l, size);
+  dist_brute = dist(x, y, texture, xt, yt, result, l, size,nbpass);
+  */
+  p_coh = Ashikhmin(texture, xt, yt, result, l, size,nbpass);
   x = p_coh/texture[l].cols;
   y = p_coh - x * texture[l].cols;
-  dist_coh = dist(x, y, texture, xt, yt, result, l, size);
-
+  dist_coh = dist(x, y, texture, xt, yt, result, l, size,nbpass);
   
-  if(dist_coh < dist_brute * (1 + powf(2, l-L)*K) )
-    return p_coh;
-  else
-    return p_brute;
+  // if(dist_coh < dist_brute * (1 + powf(2, l-L)*K) )
+  return p_coh;
+    //else
+  //return p_brute;
   
 }
 
@@ -326,14 +431,16 @@ synthese(char* texture_name, int cols, int rows, int size)
       }
     }
 
-    for(int i=0; i<rout; i++){
-      for(int j=0; j<cout; j++){
-	q = i*cout+j;
+    for(int nbpass = 0; nbpass<2; nbpass++){
+      for(int i=0; i<rout; i++){
+	for(int j=0; j<cout; j++){
+	  q = i*cout+j;
 
-	p = BestMatch(texture, i, j, result, l, size);
+	  p = BestMatch(texture, i, j, result, l, size, nbpass);
 
-	result[l].lum[q] = texture[l].lum[p];
-	result[l].s[q] = p;
+	  result[l].lum[q] = texture[l].lum[p];
+	  result[l].s[q] = p;
+	}
       }
     }
     printf("FAIT \n");

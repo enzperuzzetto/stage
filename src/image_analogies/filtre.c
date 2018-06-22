@@ -56,7 +56,306 @@ free_pyramid_filtre(Pyramid* pyramid)
 }
 
 //####################################################################################################################
+/*float
+dist_filtre(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size)
+{
+   int s = (int)(size/2.0);
+   int Acols, Arows, Bcols, Brows, ip, jp, iq, jq, p1, q1, q, k=0;
+   float lum1 = 0.0, lum2 = 0.0, d = 0.0, dprim = 0.0, tmp;
 
+   Acols = A[l].cols;
+   Arows = A[l].rows;
+   Bcols = B[l].cols;
+   Brows = B[l].rows;
+   q = xt*Bcols+yt;
+
+   for(int i=-s; i<s+1; i++){
+    for(int j=-s; j<s+1; j++){
+      ip = xs + i;
+      jp = ys + j;
+      iq = xt + i;
+      jq = yt + j;
+
+      if(ip < 0)
+	ip = Arows - ip;
+      if(jp < 0)
+	jp = Acols - jp;
+      if(ip > Arows-1)
+	ip -= Arows;
+      if(jp > Acols-1)
+	jp-= Acols;
+
+      if(iq < 0)
+	iq = Brows - iq;
+      if(jq < 0)
+	jq = Bcols - jq;
+      if(iq > Brows-1)
+	iq -= Brows;
+      if(jq > Bcols-1)
+	jq -= Bcols;
+
+      p1 = ip*Acols+jp;
+      q1 = iq*Bcols+jq;
+      
+      if((q1 == q) && nb_pass == 0)
+	break;
+      
+      tmp = A[l].lum[p1] - B[l].lum[q1];
+      lum1 += tmp * tmp;
+      k++;
+    }
+   }
+
+   d = lum1 / (float)k;
+
+   k=0;
+
+   for(int i=-s; i<s+1; i++){
+    for(int j=-s; j<s+1; j++){
+      ip = xs + i;
+      jp = ys + j;
+      iq = xt + i;
+      jq = yt + j;
+
+      if(ip < 0)
+	ip = Arows - ip;
+      if(jp < 0)
+	jp = Acols - jp;
+      if(ip > Arows-1)
+	ip -= Arows;
+      if(jp > Acols-1)
+	jp-= Acols;
+
+      if(iq < 0)
+	iq = Brows - iq;
+      if(jq < 0)
+	jq = Bcols - jq;
+      if(iq > Brows-1)
+	iq -= Brows;
+      if(jq > Bcols-1)
+	jq -= Bcols;
+
+      p1 = ip*Acols+jp;
+      q1 = iq*Bcols+jq;
+      
+      if(q1 == q)// && nb_pass == 0)
+	break;
+
+      tmp = Aprim[l].lum[p1] - Bprim[l].lum[q1];
+      lum2 += tmp * tmp;
+      k++;
+    }
+     if(q1 == q)// && nb_pass == 0)
+	break;
+   }
+
+   dprim = lum2 /(float)k;
+   
+   if(l>0){
+     xs /= 2.0;
+     ys /= 2.0;
+     xt /= 2.0;
+     yt /= 2.0;
+     s  /= 2.0;
+     Acols /= 2.0;
+     Arows /= 2.0;
+     Bcols /= 2.0;
+     Brows /= 2.0;
+     k = 0;
+     lum1 = 0.0;
+     lum2 = 0.0;
+
+     for(int i=-s; i<s+1; i++){
+       for(int j=-s; j<s+1; j++){
+	 ip = xs + i;
+	 jp = ys + j;
+	 iq = xt + i;
+	 jq = yt + j;
+
+	 if(ip < 0)
+	   ip = Arows - ip;
+	 if(jp < 0)
+	   jp = Acols - jp;
+	 if(ip > Arows-1)
+	   ip -= Arows;
+	 if(jp > Acols-1)
+	   jp-= Acols;
+
+	 if(iq < 0)
+	   iq = Brows - iq;
+	 if(jq < 0)
+	   jq = Bcols - jq;
+	 if(iq > Brows-1)
+	   iq -= Brows;
+	 if(jq > Bcols-1)
+	   jq -= Bcols;
+
+	 p1 = ip*Acols+jp;
+	 q1 = iq*Bcols+jq;
+
+	 tmp = A[l-1].lum[p1] - B[l-1].lum[q1];
+	 lum1 += tmp * tmp;
+	 tmp = Aprim[l-1].lum[p1] - Bprim[l-1].lum[q1];
+	 lum2 += tmp * tmp;
+	 k++;
+       }
+     }
+
+     d += lum1/(float)k;
+     dprim += lum2/(float)k;
+   }
+
+   return d + dprim;
+}
+*/	 
+     
+float
+dist_filtre(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size)
+{
+  int istart1, iend1, jstart1, jend1, istart2, iend2, jstart2, jend2,Acols, Arows, Bcols, Brows, p, q, p1=0, q1=0, p2, q2, k, s;
+  double d, dprim, lum1 = 0.0, lum2=0.0, tmp;
+
+  Acols = A[l].cols;
+  Arows = A[l].rows;
+  Bcols = B[l].cols;
+  Brows = B[l].rows;
+  s = (int)((size+1)/2.0);
+  p = xs * Acols + ys;
+  q = xt * Bcols + yt;
+  p2 = (xs/2.0) * (Acols/2.0) + (ys/2.0);
+  q2 = (xt/2.0) * (Bcols/2.0) + (yt/2.0);
+  k = 0;
+
+  if(xt < s)
+    istart1 = -s + (s - xt);
+  else
+    istart1 = -s;
+  if(xt > Brows-1 - s)
+    iend1 = s - (xt - (Brows-1 - s));
+  else
+    iend1 = s;
+
+  if(yt < s)
+    jstart1 = -s + (s - yt);
+  else
+    jstart1 = -s;
+  if(yt > Bcols-1 - s)
+    jend1 = s -(yt - (Bcols-1 - s));
+  else
+    jend1 = s;
+
+  for(int i=istart1; i<iend1+1; i++){
+    for(int j=jstart1; j<jend1+1; j++){
+
+      p1 = p + (i*Acols+j);
+      q1 = q + (i*Bcols+j);
+           
+      if(p1 < 0)
+	p1 = Acols*Arows + p1;
+      if( p1 >= Acols*Arows)
+	p1 = p1 - Arows*Acols;
+     
+      tmp = A[l].lum[p1] - B[l].lum[q1];
+      lum1 += tmp * tmp;
+      k++;
+    }
+  }
+  
+  if(k == 0)
+    lum1 = 99999999999999999;
+ 
+  d = lum1 / (float)k;
+
+  for(int i=istart1; i<iend1+1; i++){
+    for(int j=jstart1; j<jend1+1; j++){
+
+      p1 = p + (i*Acols+j);
+      q1 = q + (i*Bcols+j);
+           
+      if(p1 == p || q1 == q)
+	break;
+      if(p1 < 0)
+	p1 = Acols*Arows + p1;
+      if( p1 >= Acols*Arows)
+	p1 = p1 - Arows*Acols;
+     
+      tmp = Aprim[l].lum[p1] - Bprim[l].lum[q1];
+      lum2 += tmp * tmp;
+      k++;
+    }
+    if(p1 == p || q1 == q)
+      break;
+  }
+  
+  if(k == 0)
+    lum2 = 99999999999999999;
+ 
+  dprim = lum2 / (float)k;
+  
+  if(l > 0){
+    xs /= 2.0;
+    ys /= 2.0;
+    xt /= 2.0;
+    yt /= 2.0;
+    s  /= 2.0;
+    Acols /= 2.0;
+    Arows /= 2.0;
+    Bcols /= 2.0;
+    Brows /= 2.0;
+    k = 0;
+    lum1 = 0.0;
+    lum2 = 0.0;
+    
+    if(xt < s)
+      istart2 = -s + (s - xt);
+    else
+      istart2 = -s;
+    if(xt > Brows-1 - s)
+      iend2 = s - (xt - (Brows-1 - s));
+    else
+      iend2 = s;
+
+    if(yt < s)
+      jstart2 = -s + (s - yt);
+    else
+      jstart2 = -s;
+    if(yt > Bcols-1 - s)
+      jend2 = s -(yt - (Bcols-1 - s));
+    else
+      jend2 = s;
+
+    for(int i=istart2; i<iend2+1; i++){
+      for(int j=jstart2; j<jend2+1; j++){
+
+	p1 = p2 + (i*Acols+j);
+	q1 = q2 + (i*Bcols+j);
+
+	if(p1 < 0)
+	  p1 = Acols*Arows + p1;
+	if( p1 >= Acols*Arows)
+	  p1 = p1 - Arows*Acols;
+	
+	tmp = A[l-1].lum[p1] - B[l-1].lum[q1];
+	lum1 += tmp * tmp;
+	tmp = Aprim[l-1].lum[p1] - Bprim[l-1].lum[q1];
+	lum2 += tmp * tmp;
+	k++;
+      }
+    }
+
+    if( k==0){
+      lum1 =  99999999999999999;
+      lum2 = 99999999999999999;
+    }
+  
+    d += lum1 / (float)k;
+    dprim += lum2 / (float)k;
+  }
+
+  return d + dprim;
+}
+
+/*
 float
 dist_filtre(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size)
 {
@@ -144,8 +443,8 @@ dist_filtre(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid*
   if(k == 0)
     lum = 99999999999999999;
   
-  /*tmp = Aprim[l].lum[p] - Bprim[l].lum[q];
-    lum = tmp * tmp;*/
+  tmp = Aprim[l].lum[p] - Bprim[l].lum[q];
+    lum = tmp * tmp;
   
   tmp = Aprim[l].mean[p] - Bprim[l].mean[q];
   mean = tmp * tmp;
@@ -190,10 +489,10 @@ dist_filtre(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid*
 
 	p1 = p + (i*Acols+j);
 	q1 = q + (i*Bcols+j);
-	/*
+	
 	if(p1 < 0 || p1 >= Acols*Arows)
 	  continue;
-	*/
+	
 	if(p1 < 0)
 	  p1 = Acols*Arows + p1;
 	if( p1 >= Acols*Arows)
@@ -208,8 +507,8 @@ dist_filtre(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid*
     if( k==0)
       lum =  99999999999999999;
 
-    /* tmp = Aprim[l-1].lum[p2] - Bprim[l-1].lum[q2];
-       lum += tmp * tmp;*/
+    tmp = Aprim[l-1].lum[p2] - Bprim[l-1].lum[q2];
+       lum += tmp * tmp;
 
     tmp = Aprim[l-1].mean[p] - Bprim[l-1].mean[q];
     mean += tmp * tmp;
@@ -222,7 +521,7 @@ dist_filtre(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid*
       
   return d + dprim;
 }
-
+*/
 
 int
 WeiLevoy_filtre(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size)
@@ -387,7 +686,7 @@ filtre(char* source_name, char* source_filtre_name, char* target_name, int size)
       Aprim[l].lum = pyramid_level(A[L-1].cols, A[L-1].rows, data_source_filter, L-1-l);
       B[l].lum = pyramid_level(B[L-1].cols, B[L-1].rows, data_target, L-1-l);
     }
-    printf("CALCUL DESCRIPTEURS\n");
+    /* printf("CALCUL DESCRIPTEURS\n");
     mean_img(Acols, Arows, A[l].lum, A[l].mean, size, 0);
     mean_img(Acols, Arows, Aprim[l].lum, Aprim[l].mean, size, 1);
     mean_img(Bcols, Brows, B[l].lum, B[l].mean, size, 0);
@@ -413,7 +712,7 @@ filtre(char* source_name, char* source_filtre_name, char* target_name, int size)
       sd_img(acols, arows, Aprim[l-1].lum, Aprim[l-1].mean, Aprim[l-1].sd, s, 0);
       sd_img(bcols, brows, B[l-1].lum, B[l-1].mean, B[l-1].sd, s, 0);
       sd_img(bcols, brows, Bprim[l-1].lum, Bprim[l-1].mean, Bprim[l-1].sd, s, 0);
-    }
+      }*/
 
     for(int i=0; i<Brows; i++){
       for(int j=0; j<Bcols; j++){
@@ -428,12 +727,12 @@ filtre(char* source_name, char* source_filtre_name, char* target_name, int size)
       for(int j=0; j<Bcols; j++){
 	q = i*Bcols+j;
 
-	Bprim[l].mean[q] = mean(Bcols, Brows, Bprim[l].lum, q, size, 1);
+	/*	Bprim[l].mean[q] = mean(Bcols, Brows, Bprim[l].lum, q, size, 1);
 	Bprim[l].sd[q] = standard_deviation(Bcols, Brows, Bprim[l].lum, Bprim[l].mean[q], q, size, 1);
-	
+	*/
 	p = BestMatch_filtre(A, Aprim, i, j, B, Bprim, l, size);
 
-	Bprim[l].lum[q] = Aprim[l].lum[p];
+	Bprim[l].lum[q] = B[l].lum[q] + (Aprim[l].lum[p] - A[l].lum[p]);
 	Bprim[l].s[q] = p;
       }
     }
@@ -457,7 +756,6 @@ filtre(char* source_name, char* source_filtre_name, char* target_name, int size)
   for(int i=0; i<Brows; i++){
     for(int j=0; j<Bcols; j++){
       pixel = Bprim[L-1].s[i*Bcols+j];
-      //printf("%d ",pixel);
       it[i*Bcols+j] = isf[pixel];
       qt[i*Bcols+j] = qsf[pixel];
     }
