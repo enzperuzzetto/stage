@@ -12,7 +12,7 @@ BIN= analogy
 .PHONY: all
 all: $(BIN)
 
-analogy : main.o pyramid.o conversion.o BestMatch.o patchMatch.o
+analogy : main.o pyramid.o conversion.o BestMatch.o patchMatch.o stats.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
 %.o:%.c

@@ -3,8 +3,23 @@
 
 #include "pyramid.h"
 
+/**
+ * @def GAUSS
+ * Tableau de taille 5 représentant un noyeau gaussien permettant de faire la convolution pour calculer une image
+ * à un certain niveau de la pyramide gaussienne.
+ **/
+
 float GAUSS[5] = { 0.25-0.40/2.0, 0.25, 0.40, 0.25, 0.25-0.40/2.0 };
 
+/**
+ * @brief Initialise un tableau de taille L de structure Pyramid (allocation du tableau et de la structure).
+ *        Cela représente la pyramide gaussienne où le niveau 0 représente le plus bas niveau (l'image de plus basse résolution) et L-1 l'image de base (l'image de plus grande résolution).
+ *
+ * @fn Pyramid* init_pyramid(int cols, int rows, int s, int L)
+ * @param cols,rows dimensions de l'image.
+ * @param s entier servant de booleen permettant de savoir si l'allocation du tableau s est nécéssaire ou non.
+ * @return Le tableau de la pyramide gaussienne
+ **/
 Pyramid*
 init_pyramid(int cols, int rows, int s, int L)
 {
@@ -24,6 +39,14 @@ init_pyramid(int cols, int rows, int s, int L)
   return pyramid;
 }
 
+/**
+ * @brief Libère la mèmoire du tableau de la pyramide gaussienne.
+ *
+ * @fn void free_pyramid(Pyramid* pyramid, int s, int L)
+ * @param pyramid tableau à désallouer.
+ * @param s booleen permettant de savoir si oui ou non le tableau s doit être désallouer.
+ * @param L taille de la pyramid.
+ **/
 void
 free_pyramid(Pyramid* pyramid, int s, int L)
 {
@@ -36,6 +59,14 @@ free_pyramid(Pyramid* pyramid, int s, int L)
   free(pyramid);
 }
 
+/**
+ * @brief Calcule les dimensions de l'image à un certain niveau de la pyramide.
+ *
+ * @fn int* pyramid_level_dim(int cols, int rows, int level)
+ * @param cols,rows dimension de l'image de base.
+ * @param level niveau de la pyramide ou l'on souhaite calculer les dimensions. (Attention ici 0 représente l'image de base donc faire L-level)
+ * @return un tableau de deux int où tab[0] = cols et tab[1] = rows
+ **/
 int*
 pyramid_level_dim(int cols, int rows, int level)
 {
@@ -52,6 +83,15 @@ pyramid_level_dim(int cols, int rows, int level)
 }
 
 
+/**
+ * @brief Permet de calculer l'image au niveau level de la pyramide.
+ *
+ * @fn float* pyramid_level(int cols, int rows, float* data, int level)
+ * @param cols,rows dimension de l'image de base.
+ * @param data tableau de l'image de base.
+ * @param level niveau de la pyramide ou l'on souhaite calculer les dimensions. (Attention ici 0 représente l'image de base donc faire L-level)
+ * @return Un tableau de l'image au niveau level de la pyramide.
+ **/
 float*
 pyramid_level(int cols, int rows, float* data, int level)
 {

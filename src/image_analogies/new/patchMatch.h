@@ -8,11 +8,11 @@
 
 #include "pyramid.h"
 #include "BestMatch.h"
+#include "stats.h"
 
 #define ALPHA 0.5
 
-int
-max(int a, int b);
+
 /**
  * @brief Phase d'initialisation
  *        Créer un tableau aléatoire des indices de A de taille de B

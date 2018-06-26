@@ -1,11 +1,13 @@
 #include "patchMatch.h"
 
-int
-max(int a, int b)
-{
-  return (a<b)?b:a;
-}
-
+/**
+ * @brief Permet d'initailiser un tableau d'indices random.
+ *
+ * @fn int* initialisation(int cols_s, int rows_s, int cols_t, int rows_t)
+ * @param cols_s,row_s dimensions du tableau de sortie.
+ * @param cos_t,rows_t dimensions de l'image où prendre les indices.
+ * @return un tableau d'indices random d'une image.
+ **/
 int*
 initialisation(int cols_s, int rows_s, int cols_t, int rows_t)
 {
@@ -18,6 +20,23 @@ initialisation(int cols_s, int rows_s, int cols_t, int rows_t)
   return nnf;
 }
 
+/**
+ * @brief Etape de la recherche de l'algorithme de pathcMatch.
+ *        Recherche aléatoire dans une fenêtre de recherche qui diminue à chaque itération de boucle.
+ *
+ * @fn int search(Pyramid* A, Pyramid* Aprim, int q, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel, int* nnf)
+ * @param A,A' pyramide gaussienne de l'image source A et A'.
+ * @param q indice du pixel des images B et B'.
+ * @param B,B' pyramide gaussienne des images B et B'.
+ * @parma l niveau de la pyramide gaussienne.
+ * @param size taille du patch/voisinnage.
+ * @param float W: poid soulignant la similarité entre (A,B) et (A',B').
+ * @param int weighting: booleen qui détermine l'utilisation de W.
+ * @param int skipCenter: booleen qui détermine si l'on fait sur le L-shape du patch ou sur le patch entier.
+ * @param float** kernel: matrice de noyaux gaussiens.
+ * @param nnf  tableau d'indice de A et A' aléatoire.
+ * @return le pixel ayant la plus petiite distance à la fin des itérations.
+ **/
 int
 search(Pyramid* A, Pyramid* Aprim, int q, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel, int* nnf)
 {
@@ -58,6 +77,23 @@ search(Pyramid* A, Pyramid* Aprim, int q, Pyramid* B, Pyramid* Bprim, int l, int
   return pixel_min;
 }
 
+/**
+ * @brief Etapde de propagation de l'algorithme de patchMatch.
+ *        Compare et retourne le pixel qui à la plus petite distance entre le pixel q, son voisin de gauche et son voisin du dessus.
+ *
+ * @fn int propagation(Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel, int* nnf)
+ * @param A,A' pyramide gaussienne de l'image source A et A'.
+ * @param q indice du pixel des images B et B'.
+ * @param B,B' pyramide gaussienne des images B et B'.
+ * @parma l niveau de la pyramide gaussienne.
+ * @param size taille du patch/voisinnage.
+ * @param float W: poid soulignant la similarité entre (A,B) et (A',B').
+ * @param int weighting: booleen qui détermine l'utilisation de W.
+ * @param int skipCenter: booleen qui détermine si l'on fait sur le L-shape du patch ou sur le patch entier.
+ * @param float** kernel: matrice de noyaux gaussiens.
+ * @param nnf  tableau d'indice de A et A' aléatoire.
+ * @return Soit le pixel q soit son pixel de gauche soit celui du dessus.
+ **/
 int
 propagation(Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel, int* nnf)
 {
@@ -101,6 +137,9 @@ propagation(Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim
   return pixel_min;
 }
 
+/**
+ * @brief Appel des fonctions propagation puis search
+ **/
 int
 iteration(Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel, int* nnf)
 {
@@ -110,6 +149,9 @@ iteration(Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim, 
   return pixelSource;
 }
 
+/**
+ * @brief Une itération de l'algorithme patchMatch
+ **/
 int
 patchMatch( Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel, int* nnf, int k)
 {

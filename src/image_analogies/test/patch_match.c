@@ -34,7 +34,7 @@ Dist(int p, int cols_s, int rows_s, float* A, int q, int cols_t, int rows_t, flo
     for(int j=0; j<PATCH; j++){
       i_p1 = i - PATCH/2.0;
       j_p1 = j - PATCH/2.0;
-      
+
       p_patch = p + i_p1*cols_s +j_p1;
       q_patch = q + i_p1*cols_t + j_p1;
 
@@ -64,7 +64,7 @@ initialisation(int cols_s, int rows_s, int cols_t, int rows_t)
     nnf[k] = rand()%(cols_t*rows_t);
   }
 
-  return nnf;  
+  return nnf;
 }
 
 int
@@ -74,12 +74,12 @@ propagation(int cols_s, int rows_s, float* A, int cols_t, int rows_t, float* B, 
   float dist_min = Dist(p, cols_s, rows_s, A, nnf[p], cols_t, rows_t, B);
   //left
   int p1 = p-1;
-  
+
   if(p1 <0)
     p1=0;
   else if(p1 > cols_s*rows_s-1)
     p1 = cols_s*rows_s-1;
-  
+
   float d = Dist(p1, cols_s, rows_s, A, nnf[p1], cols_t, rows_t, B);
 
   if( d < dist_min ){
@@ -94,7 +94,7 @@ propagation(int cols_s, int rows_s, float* A, int cols_t, int rows_t, float* B, 
     p1=0;
   else if(p1 > cols_s*rows_s-1)
     p1 = cols_s*rows_s-1;
-  
+
   d = Dist(p1, cols_s, rows_s, A, nnf[p1], cols_t, rows_t, B);
 
   if( d < dist_min ){
@@ -110,13 +110,13 @@ search(int cols_s, int rows_s, float* A, int cols_t, int rows_t, float* B, int* 
 {
   int w = max(cols_t, rows_t), pixel_x = 0, pixel_y = 0, pixel = 0, pixel_min = nnf[p], i=0;
   float dist_min = Dist(p, cols_s, rows_s, A, pixel_min, cols_t, rows_t, B), d = 0.0, alpha = powf(ALPHA, i), x = 0.0, y = 0.0;
-  
+
   //for(int i=0; i< NB_MAX_ITER; i++){
   while( w*alpha > 1){
-    
+
     x = ((float)rand()/ (float)(RAND_MAX/3.0)) -1;
     y = ((float)rand()/ (float)(RAND_MAX/3.0)) -1;
-    
+
     /*
     if(w*alpha < 1)
       break;
@@ -124,20 +124,20 @@ search(int cols_s, int rows_s, float* A, int cols_t, int rows_t, float* B, int* 
     pixel_x = w*alpha*x;
     pixel_y = w*alpha*y;
     pixel = pixel_min + (pixel_x*cols_t + pixel_y);
-    
+
 
     if(pixel <0)
       pixel=0;
     else if(pixel > cols_t*rows_t-1)
       pixel = cols_t*rows_t-1;
-    
+
     d = Dist(p, cols_s, rows_s, A, pixel, cols_t, rows_t, B);
 
     if(d < dist_min){
       dist_min = d;
       pixel_min = pixel;
     }
-    
+
     i++;
     alpha = powf(ALPHA, i);
   }
@@ -164,8 +164,8 @@ process(char *ims_name, char *imt_name )
   pnm imt = pnm_load(imt_name);
   int cols_t = pnm_get_width(imt);
   int rows_t = pnm_get_height(imt);
-  
-  
+
+
   pnm imd = pnm_new(cols_s, rows_s, PnmRawPpm);
 
 
@@ -183,18 +183,18 @@ process(char *ims_name, char *imt_name )
     }
   }
 
-  
+
   for(int i=0; i< rows_t; i++){
     for(int j=0; j<cols_t; j++){
       B_r[i*cols_t+j] = (float)data_t[i*cols_t+j];
-      
+
     }
   }
 
   int* nnf = initialisation(cols_s, rows_s, cols_t, rows_t);
-  
+
   for(int i=0; i<NB_MAX_ITER; i++){
-    //initialisation 
+    //initialisation
     int p, q;
     if(i%2 == 0){//top to bot
       for(int x=0; x<rows_s; x++){
@@ -206,8 +206,8 @@ process(char *ims_name, char *imt_name )
 	      out_r[p] = B_r[q];
 	      nnf[p] = q;
 	    }
-	    
-	  
+
+
 	  }
 	  else{
 	    out_r[p] = B_r[q];
@@ -225,7 +225,7 @@ process(char *ims_name, char *imt_name )
 	      out_r[p] = B_r[q];
 	      nnf[p] = q;
 	    }
-	  
+
 	  }
 	  else{
 	    out_r[p] = B_r[q];
@@ -245,14 +245,14 @@ process(char *ims_name, char *imt_name )
 	val = 255;
       else if(val < 0)
 	val = 0.0;
-      
+
       data_out_r[i*cols_t+j] =(unsigned short)val;
     }
   }
 
   pnm_set_channel(imd, data_out_r, 0);
-  
-  pnm_save(imd, PnmRawPpm, "PatchMatch.ppm");  
+
+  pnm_save(imd, PnmRawPpm, "PatchMatch.ppm");
 
   free(data_s);
   free(data_t);

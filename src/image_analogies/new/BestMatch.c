@@ -1,5 +1,13 @@
 #include "BestMatch.h"
 
+/**
+ * @brief initialisation des noyaux gaussiens en fonction du voisinnage.
+ *        Ses noyaux sont utilisés pour faire le poid des pixels sur les patchs.
+ *
+ * @fn float** initKernel(int size)
+ * @param int size: taille du patch et donc taille du noyau.
+ * @return float** Retourne une matrice comportant différent noyau les noyaux selon la taille.
+ **/
 float**
 initKernel(int size)
 {
@@ -22,6 +30,13 @@ initKernel(int size)
     return kernel;
 }
 
+/**
+ * @brief Libération mémoire de la matrice de noyaux.
+ *
+ * @fn void freeKernel(float** kernel, int size)
+ * @param float** kernel: matrice a libérer
+ * @param int size: taille de la matrice
+ **/
 void
 freeKernel(float** kernel, int size)
 {
@@ -31,6 +46,23 @@ freeKernel(float** kernel, int size)
 }
 
 
+/**
+ * @brief Calule de la distance métrique entre deux points et leurs voisinnages à un certain niveau de la pyramide gaussienne.
+ *        Utilisation de L2-norm.
+ *
+ * @fn float dist_level(int xs, int ys, Pyramid* A, int xt, int yt, Pyramid* B, int l, int size, float W, int weighting, int skipCenter, float** kernel)
+ * @param int xs, ys: position du premier point sur la première image.
+ * @param Pyramid* A: pyramide gaussienne de la première image. cf pyramid.h
+ * @param int xt, yt: position du dexième point sur la deuxième image.
+ * @param Pyramid* B: pyramid gaussienne de la seconde image.
+ * @param int l: Niveau de la pyramide où effectuer se calcule.
+ * @param int size: taille des patchs.
+ * @param float W: poid soulignant la similarité entre (A,B) et (A',B').
+ * @param int weighting: booleen qui détermine l'utilisation de W.
+ * @param int skipCenter: booleen qui détermine si l'on fait sur le L-shape du patch ou sur le patch entier.
+ * @param float** kernel: matrice de noyaux gaussiens.
+ * @return float Distance sérarant ses deux patchs (ressemblance) au niveau l.
+ **/
 float
 dist_level(int xs, int ys, Pyramid* A, int xt, int yt, Pyramid* B, int l, int size, float W, int weighting, int skipCenter, float** kernel)
 {
@@ -54,7 +86,7 @@ dist_level(int xs, int ys, Pyramid* A, int xt, int yt, Pyramid* B, int l, int si
       if(dstX*B[l].cols+dstY < 0 || dstX*B[l].cols+dstY > B[l].cols*B[l].rows-1)
         continue;
 
-
+      //tor sur A'
       if(srcX < 0)
         srcX = A[l].rows + srcX;
       else if(srcX >= A[l].rows)
@@ -92,6 +124,23 @@ dist_level(int xs, int ys, Pyramid* A, int xt, int yt, Pyramid* B, int l, int si
   return d;
 }
 
+/**
+ * @brief Calcule la distance métrique entre deux points au niveau l et l-1.
+ *
+ * @fn float dist(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel)
+ * @param int xs, ys: position du premier point sur la première image.
+ * @param Pyramid* A: pyramide gaussienne de la première image. cf pyramid.h
+ * @param int xt, yt: position du dexième point sur la deuxième image.
+ * @param Pyramid* B: pyramid gaussienne de la seconde image.
+ * @param int l: Niveau de la pyramide où effectuer se calcule.
+ * @param int size: taille des patchs.
+ * @param float W: poid soulignant la similarité entre (A,B) et (A',B').
+ * @param float levelWeight: poid entre chaque niveau de la pyramide.
+ * @param int weighting: booleen qui détermine l'utilisation de W.
+ * @param int skipCenter: booleen qui détermine si l'on fait sur le L-shape du patch ou sur le patch entier.
+ * @param float** kernel: matrice de noyaux gaussiens.
+ * @return float Distance sérarant ses deux patchs (ressemblance).
+ **/
 float
 dist(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel)
 {
@@ -127,6 +176,23 @@ dist(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyr
   return d;
 }
 
+/**
+ * @brief Algorithme de Wei/Levoy.
+ *
+ * @fn int WeiLevoy(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel)
+ * @param int xs, ys: position du premier point sur la première image.
+ * @param Pyramid* A: pyramide gaussienne de la première image. cf pyramid.h
+ * @param int xt, yt: position du dexième point sur la deuxième image.
+ * @param Pyramid* B: pyramid gaussienne de la seconde image.
+ * @param int l: Niveau de la pyramide où effectuer se calcule.
+ * @param int size: taille des patchs.
+ * @param float W: poid soulignant la similarité entre (A,B) et (A',B').
+ * @param float levelWeight: poid entre chaque niveau de la pyramide.
+ * @param int weighting: booleen qui détermine l'utilisation de W.
+ * @param int skipCenter: booleen qui détermine si l'on fait sur le L-shape du patch ou sur le patch entier.
+ * @param float** kernel: matrice de noyaux gaussiens.
+ * @return int retourne la position du pixel qui correspond le mieux au pixel q.
+ **/
 int
 WeiLevoy(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel)
 {
@@ -153,6 +219,23 @@ WeiLevoy(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim,
   return pmin;
 }
 
+/**
+ * @brief Algorithme de Ashikhmin.
+ *
+ * @fn int Ashikhmin(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel)
+ * @param int xs, ys: position du premier point sur la première image.
+ * @param Pyramid* A: pyramide gaussienne de la première image. cf pyramid.h
+ * @param int xt, yt: position du dexième point sur la deuxième image.
+ * @param Pyramid* B: pyramid gaussienne de la seconde image.
+ * @param int l: Niveau de la pyramide où effectuer se calcule.
+ * @param int size: taille des patchs.
+ * @param float W: poid soulignant la similarité entre (A,B) et (A',B').
+ * @param float levelWeight: poid entre chaque niveau de la pyramide.
+ * @param int weighting: booleen qui détermine l'utilisation de W.
+ * @param int skipCenter: booleen qui détermine si l'on fait sur le L-shape du patch ou sur le patch entier.
+ * @param float** kernel: matrice de noyaux gaussiens.
+ * @return int retourne la position du pixel qui correspond le mieux au pixel q.
+ **/
 int
 Ashikhmin(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel)
 {
@@ -204,7 +287,23 @@ Ashikhmin(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim
 
 
 
-
+/**
+ * @brief Retourne la meilleure correspondance du pixel q entre l'algorithme de Wei/Levoy et Ashikhmin.
+ *
+ * @fn int BestMatch(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, int L, int K, float** kernel)
+ * @param int xs, ys: position du premier point sur la première image.
+ * @param Pyramid* A: pyramide gaussienne de la première image. cf pyramid.h
+ * @param int xt, yt: position du dexième point sur la deuxième image.
+ * @param Pyramid* B: pyramid gaussienne de la seconde image.
+ * @param int l: Niveau de la pyramide où effectuer se calcule.
+ * @param int size: taille des patchs.
+ * @param float W: poid soulignant la similarité entre (A,B) et (A',B').
+ * @param float levelWeight: poid entre chaque niveau de la pyramide.
+ * @param int weighting: booleen qui détermine l'utilisation de W.
+ * @param int skipCenter: booleen qui détermine si l'on fait sur le L-shape du patch ou sur le patch entier.
+ * @param float** kernel: matrice de noyaux gaussiens.
+ * @return int retourne la position du pixel qui correspond le mieux au pixel q.
+ **/
 int
 BestMatch(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, int L, int K, float** kernel)
 {
