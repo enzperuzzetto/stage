@@ -15,12 +15,12 @@ void
 freeKernel(float** kernel, int size);
 
 float
-dist(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel);
+dist(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, int onePixel, float** kernel);
 
 int
-Ashikhmin(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel);
+Ashikhmin(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, int onePixel, float** kernel);
 
 int
-BestMatch(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float w, float levelweight, int L, int K, float** kernel);
+BestMatch(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float w, float levelweight, int L, int K, int onePixel, float** kernel);
 
 #endif

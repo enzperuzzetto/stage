@@ -50,23 +50,24 @@ freeKernel(float** kernel, int size)
  * @brief Calule de la distance métrique entre deux points et leurs voisinnages à un certain niveau de la pyramide gaussienne.
  *        Utilisation de L2-norm.
  *
- * @fn float dist_level(int xs, int ys, Pyramid* A, int xt, int yt, Pyramid* B, int l, int size, float W, int weighting, int skipCenter, float** kernel)
+ * @fn float dist_level(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, int skipCenter, int onePixel, float** kernel)
  * @param int xs, ys: position du premier point sur la première image.
- * @param Pyramid* A: pyramide gaussienne de la première image. cf pyramid.h
+ * @param Pyramid* A, A': pyramide gaussienne de la première image. cf pyramid.h
  * @param int xt, yt: position du dexième point sur la deuxième image.
- * @param Pyramid* B: pyramid gaussienne de la seconde image.
+ * @param Pyramid* B, B': pyramid gaussienne de la seconde image.
  * @param int l: Niveau de la pyramide où effectuer se calcule.
  * @param int size: taille des patchs.
  * @param float W: poid soulignant la similarité entre (A,B) et (A',B').
  * @param int weighting: booleen qui détermine l'utilisation de W.
  * @param int skipCenter: booleen qui détermine si l'on fait sur le L-shape du patch ou sur le patch entier.
+ * @param onePixel: booleen qui prend que le pixel centrale au niveau l.
  * @param float** kernel: matrice de noyaux gaussiens.
  * @return float Distance sérarant ses deux patchs (ressemblance) au niveau l.
  **/
 float
-dist_level(int xs, int ys, Pyramid* A, int xt, int yt, Pyramid* B, int l, int size, float W, int weighting, int skipCenter, float** kernel)
+dist_level(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, int skipCenter, int onePixel, float** kernel)
 {
-  int offset = size/2, dstX, dstY, srcX, srcY;
+  int offset = size/2, dstX, dstY, srcX, srcY, centerpassed=0;
   float totalweight = 0., d = 0., tmp;
 
   for(int i=0; i<size; i++){
@@ -77,14 +78,14 @@ dist_level(int xs, int ys, Pyramid* A, int xt, int yt, Pyramid* B, int l, int si
       srcY = ys + j - offset;
       dstY = yt + j - offset;
 
-      if( skipCenter && dstY == yt && dstX == xt)
-        break;
-
       float weight = kernel[size][i] * kernel[size][j];
 
       //B' no valid
       if(dstX*B[l].cols+dstY < 0 || dstX*B[l].cols+dstY > B[l].cols*B[l].rows-1)
         continue;
+
+      if(dstX == xt && dstY == yt)
+        centerpassed = 1;
 
       //tor sur A'
       if(srcX < 0)
@@ -96,26 +97,22 @@ dist_level(int xs, int ys, Pyramid* A, int xt, int yt, Pyramid* B, int l, int si
       else if(srcY >= A[l].cols)
         srcY -= A[l].cols;
 
-      //if(srcX <0 || srcX >= A[l].rows || srcY<0 || srcY>= A[l].rows)
-        //continue;
-
-      tmp = A[l].lum[srcX*A[l].cols+srcY] - B[l].lum[dstX*B[l].cols+dstY];
-      float dp = tmp * tmp;
-
-      if( weighting ){
-        totalweight += weight * W;
-        weight *= W;
-      }
-      else{
+      if( (skipCenter && !centerpassed) || !skipCenter){
+        tmp = Aprim[l].lum[srcX*A[l].cols+srcY] - Bprim[l].lum[dstX*B[l].cols+dstY];
+        float pdist = tmp * tmp;
+        d += weight * weight * pdist;
         totalweight += weight;
       }
 
-      d += weight * weight * dp;
-
-      //totalweight += weight;
+    if(W > 0.0 && (!onePixel || (dstX == xt && dstY == yt))){
+        tmp = A[l].lum[srcX*A[l].cols+srcY] - B[l].lum[dstX*B[l].cols+dstY];
+        float pdist = tmp * tmp;
+        float fac = W * W;
+        fac *= weight * weight;
+        totalweight += W * weight;
+        d += fac * pdist;
+      }
     }
-    if( skipCenter && dstY == yt && dstX == xt)
-      break;
   }
 
   if(totalweight > 0)
@@ -123,7 +120,6 @@ dist_level(int xs, int ys, Pyramid* A, int xt, int yt, Pyramid* B, int l, int si
 
   return d;
 }
-
 /**
  * @brief Calcule la distance métrique entre deux points au niveau l et l-1.
  *
@@ -138,36 +134,39 @@ dist_level(int xs, int ys, Pyramid* A, int xt, int yt, Pyramid* B, int l, int si
  * @param float levelWeight: poid entre chaque niveau de la pyramide.
  * @param int weighting: booleen qui détermine l'utilisation de W.
  * @param int skipCenter: booleen qui détermine si l'on fait sur le L-shape du patch ou sur le patch entier.
+ * @param onePixel: booleen qui prend que le pixel centrale au niveau l.
  * @param float** kernel: matrice de noyaux gaussiens.
  * @return float Distance sérarant ses deux patchs (ressemblance).
  **/
 float
-dist(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel)
+dist(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, int onePixel, float** kernel)
 {
   float lweight = 1;
   float d = 0., d2 = 0.;
 
   //lweight *= levelWeight * levelWeight;
-
+  /*
   d2 = dist_level(xs, ys, Aprim, xt, yt, Bprim, l, size, W, 0, 1, kernel);
 
   if( W > 0.0 )//&& W < 1.0)
     d2 += dist_level(xs, ys, A, xt, yt, B, l, size, W, 1, 0, kernel);
-  /*else if( W >= 1.0 )
+  else if( W >= 1.0 )
     d2 += dist_level(xs, ys, A, xt, yt, B, l, size, W, 1, 0, kernel);
 */
+  d2 = dist_level(xs, ys, A, Aprim, xt, yt, B, Bprim, l, size, W, 1, onePixel, kernel);
   d2 *= lweight * lweight;
   d += d2;
 
   if(l > 0){
     d2 = 0.;
     lweight *= levelWeight * levelWeight;
-
+    /*
     d2 = dist_level(xs/2, ys/2, Aprim, xt/2, yt/2, Bprim, l-1, size/2+1, W, 0, 0, kernel);
 
     if( W > 0.0)
       d2 += dist_level(xs/2, ys/2, A, xt/2, yt/2, B, l-1, size/2+1, W, 1, 0, kernel);
-
+      */
+    d2 = dist_level(xs/2, ys/2, A, Aprim, xt/2, yt/2, B, Bprim, l-1, size/2+1, W, 0, onePixel, kernel);
     d2 *= lweight * lweight;
 
     d += d2;
@@ -190,24 +189,25 @@ dist(int xs, int ys, Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyr
  * @param float levelWeight: poid entre chaque niveau de la pyramide.
  * @param int weighting: booleen qui détermine l'utilisation de W.
  * @param int skipCenter: booleen qui détermine si l'on fait sur le L-shape du patch ou sur le patch entier.
+ * @param onePixel: booleen qui prend que le pixel centrale au niveau l.
  * @param float** kernel: matrice de noyaux gaussiens.
  * @return int retourne la position du pixel qui correspond le mieux au pixel q.
  **/
 int
-WeiLevoy(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel)
+WeiLevoy(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, int onePixel,float** kernel)
 {
   float dist_min, d;
   int pmin=0, p, Arows, Acols;
   Arows = A[l].rows;
   Acols = A[l].cols;
 
-  dist_min = dist(0, 0, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, kernel);
+  dist_min = dist(0, 0, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, onePixel, kernel);
 
   for(int i=0; i<Arows; i++){
     for(int j=0; j<Acols; j++){
       p = i*Acols+j;
 
-      d = dist(i, j, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, kernel);
+      d = dist(i, j, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, onePixel, kernel);
       if(d < dist_min){
 	dist_min = d;
 	pmin = p;
@@ -233,11 +233,12 @@ WeiLevoy(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim,
  * @param float levelWeight: poid entre chaque niveau de la pyramide.
  * @param int weighting: booleen qui détermine l'utilisation de W.
  * @param int skipCenter: booleen qui détermine si l'on fait sur le L-shape du patch ou sur le patch entier.
+ * @param onePixel: booleen qui prend que le pixel centrale au niveau l.
  * @param float** kernel: matrice de noyaux gaussiens.
  * @return int retourne la position du pixel qui correspond le mieux au pixel q.
  **/
 int
-Ashikhmin(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel)
+Ashikhmin(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, int onePixel, float** kernel)
 {
   float dist_min, d;
   int pmin, p, pixel, q, Acols, Arows, Bcols, xs, ys, start, end;
@@ -252,7 +253,7 @@ Ashikhmin(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim
   xs = pmin/Acols;
   ys = pmin - xs * Acols;
 
-  dist_min = dist(xs, ys, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, kernel);
+  dist_min = dist(xs, ys, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, onePixel, kernel);
 
   for(int i=start; i<end+1; i++){
     for(int j=start; j<end+1; j++){
@@ -271,7 +272,7 @@ Ashikhmin(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim
       xs = p/Acols;
       ys = p - xs * Acols;
 
-      d = dist(xs, ys, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, kernel);
+      d = dist(xs, ys, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, onePixel, kernel);
 
       if(d < dist_min){
 	dist_min = d;
@@ -301,24 +302,25 @@ Ashikhmin(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim
  * @param float levelWeight: poid entre chaque niveau de la pyramide.
  * @param int weighting: booleen qui détermine l'utilisation de W.
  * @param int skipCenter: booleen qui détermine si l'on fait sur le L-shape du patch ou sur le patch entier.
+ * @param onePixel: booleen qui prend que le pixel centrale au niveau l.
  * @param float** kernel: matrice de noyaux gaussiens.
  * @return int retourne la position du pixel qui correspond le mieux au pixel q.
  **/
 int
-BestMatch(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, int L, int K, float** kernel)
+BestMatch(Pyramid* A, Pyramid* Aprim, int xt, int yt, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, int L, int K, int onePixel, float** kernel)
 {
   int p_brute, p_coh, x, y;
   float dist_brute, dist_coh;
 
-  p_brute = WeiLevoy(A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, kernel);
+  p_brute = WeiLevoy(A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, onePixel, kernel);
   x = p_brute/A[l].cols;
   y = p_brute - x * A[l].cols;
-  dist_brute = dist(x, y, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, kernel);
+  dist_brute = dist(x, y, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, onePixel, kernel);
 
-  p_coh = Ashikhmin(A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, kernel);
+  p_coh = Ashikhmin(A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, onePixel, kernel);
   x = p_coh/A[l].cols;
   y = p_coh - x * A[l].cols;
-  dist_coh = dist(x, y, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, kernel);
+  dist_coh = dist(x, y, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, onePixel,kernel);
 
 
   if(dist_coh < dist_brute * (1 + powf(2, l-L)*K) )

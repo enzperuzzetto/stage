@@ -33,12 +33,13 @@ initialisation(int cols_s, int rows_s, int cols_t, int rows_t)
  * @param float W: poid soulignant la similarité entre (A,B) et (A',B').
  * @param int weighting: booleen qui détermine l'utilisation de W.
  * @param int skipCenter: booleen qui détermine si l'on fait sur le L-shape du patch ou sur le patch entier.
+ * @param onePixel: booleen qui prend que le pixel centrale au niveau l.
  * @param float** kernel: matrice de noyaux gaussiens.
  * @param nnf  tableau d'indice de A et A' aléatoire.
  * @return le pixel ayant la plus petiite distance à la fin des itérations.
  **/
 int
-search(Pyramid* A, Pyramid* Aprim, int q, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel, int* nnf)
+search(Pyramid* A, Pyramid* Aprim, int q, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, int onePixel, float** kernel, int* nnf)
 {
   int w = max(A[l].cols, A[l].rows), pixel_x = 0, pixel_y = 0, pixel = 0, pixel_min = nnf[q], i = 0;
   int xt = q/B[l].cols;
@@ -46,7 +47,7 @@ search(Pyramid* A, Pyramid* Aprim, int q, Pyramid* B, Pyramid* Bprim, int l, int
   int xs = pixel_min/A[l].cols;
   int ys = pixel_min - xs*A[l].cols;
 
-  float dist_min = dist(xs, ys, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, kernel), d = 0.0, alpha = powf(ALPHA, i), x = 0.0, y = 0.0;
+  float dist_min = dist(xs, ys, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, onePixel, kernel), d = 0.0, alpha = powf(ALPHA, i), x = 0.0, y = 0.0;
 
   while( w*alpha > 1){
     x = ((float)rand()/ (float)(RAND_MAX/3.0)) -1;
@@ -63,7 +64,7 @@ search(Pyramid* A, Pyramid* Aprim, int q, Pyramid* B, Pyramid* Bprim, int l, int
 
     xs = pixel/A[l].cols;
     ys = pixel - xs*A[l].cols;
-    d = dist(xs, ys, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, kernel);
+    d = dist(xs, ys, A, Aprim, xt, yt, B, Bprim, l, size, W, levelWeight, onePixel, kernel);
 
     if( d < dist_min){
       dist_min = d;
@@ -90,19 +91,20 @@ search(Pyramid* A, Pyramid* Aprim, int q, Pyramid* B, Pyramid* Bprim, int l, int
  * @param float W: poid soulignant la similarité entre (A,B) et (A',B').
  * @param int weighting: booleen qui détermine l'utilisation de W.
  * @param int skipCenter: booleen qui détermine si l'on fait sur le L-shape du patch ou sur le patch entier.
+ * @param onePixel: booleen qui prend que le pixel centrale au niveau l.
  * @param float** kernel: matrice de noyaux gaussiens.
  * @param nnf  tableau d'indice de A et A' aléatoire.
  * @return Soit le pixel q soit son pixel de gauche soit celui du dessus.
  **/
 int
-propagation(Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel, int* nnf)
+propagation(Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, int onePixel, float** kernel, int* nnf)
 {
   int q = x*B[l].cols+y;
   int pixel_min = q;
   int p = nnf[pixel_min];
   int xs = p/A[l].cols;
   int ys = p - xs*A[l].cols;
-  float dist_min = dist(xs, ys, A, Aprim, x, y, B, Bprim, l, size, W, levelWeight, kernel);
+  float dist_min = dist(xs, ys, A, Aprim, x, y, B, Bprim, l, size, W, levelWeight, onePixel, kernel);
 
   int left = q - 1;
   if(left < 0)
@@ -112,7 +114,7 @@ propagation(Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim
   xs = p/A[l].cols;
   ys = p - xs*A[l].cols;
 
-  float d = dist(xs, ys, A, Aprim, x, y, B, Bprim, l, size, W, levelWeight, kernel);
+  float d = dist(xs, ys, A, Aprim, x, y, B, Bprim, l, size, W, levelWeight, onePixel, kernel);
 
   if(d < dist_min){
     dist_min = d;
@@ -127,7 +129,7 @@ propagation(Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim
   xs = p/A[l].cols;
   ys = p - xs*A[l].cols;
 
-  d = dist(xs, ys, A, Aprim, x, y, B, Bprim, l, size, W, levelWeight, kernel);
+  d = dist(xs, ys, A, Aprim, x, y, B, Bprim, l, size, W, levelWeight, onePixel, kernel);
 
   if(d < dist_min){
     dist_min = d;
@@ -141,10 +143,10 @@ propagation(Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim
  * @brief Appel des fonctions propagation puis search
  **/
 int
-iteration(Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel, int* nnf)
+iteration(Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, int onePixel, float** kernel, int* nnf)
 {
-  int pixelTarget = propagation(A, Aprim, x, y, B, Bprim, l, size, W, levelWeight, kernel, nnf);
-  int pixelSource = search(A, Aprim, pixelTarget, B, Bprim, l, size, W, levelWeight, kernel, nnf);
+  int pixelTarget = propagation(A, Aprim, x, y, B, Bprim, l, size, W, levelWeight, onePixel, kernel, nnf);
+  int pixelSource = search(A, Aprim, pixelTarget, B, Bprim, l, size, W, levelWeight, onePixel, kernel, nnf);
 
   return pixelSource;
 }
@@ -153,18 +155,18 @@ iteration(Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim, 
  * @brief Une itération de l'algorithme patchMatch
  **/
 int
-patchMatch( Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel, int* nnf, int k)
+patchMatch( Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, int onePixel, float** kernel, int* nnf, int k)
 {
   int pixelMatch = nnf[x*B[l].cols+y], tmp = 0;
   int xs = pixelMatch/A[l].cols;
   int ys = pixelMatch - xs*A[l].cols;
 
-  tmp = iteration(A, Aprim, x, y, B, Bprim, l, size, W, levelWeight, kernel, nnf);
+  tmp = iteration(A, Aprim, x, y, B, Bprim, l, size, W, levelWeight, onePixel, kernel, nnf);
   int xxs = tmp/A[l].cols;
   int yys = tmp - xxs*A[l].cols;
 
   if(k > 0){
-    if( dist(xs, ys, A, Aprim, x, y, B, Bprim, l, size, W, levelWeight, kernel) > dist(xxs, yys, A, Aprim, x, y, B, Bprim, l, size, W, levelWeight, kernel) ){
+    if( dist(xs, ys, A, Aprim, x, y, B, Bprim, l, size, W, levelWeight, onePixel, kernel) > dist(xxs, yys, A, Aprim, x, y, B, Bprim, l, size, W, levelWeight, onePixel, kernel) ){
        pixelMatch = tmp;
     }
   }

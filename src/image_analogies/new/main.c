@@ -8,19 +8,23 @@
 #include "BestMatch.h"
 #include "patchMatch.h"
 #include "pyramid.h"
+#include "stats.h"
 
+/* parametres */
+int L = 1; //niveau max de la pyramide gaussienne
+int neighborSize = 5; //taille du voisinnage/patch
+int sum = 0; //booleen pour créer ou non la mosaïque
+int colorTransfert = 0; // booleen pour forcer ou non le transfert de couleur
+int bestmatch = 1; // booleen pour l'utilisation de l'algorithme bestMatch
+int patchmatch = 0; // booleen pour l'utilisation de l'agorithme patchMatch
+int nbMaxIter = 3; // nombre d'itération a effectué dans patchMatch
+int lumRemap = 0; // booleen pour faire la luminace remapping
+int onePixel = 0; // booleen pour prendre que le pixel centrale au niveau l de A et B lors du transfert
+float w = 1.; // le poid W et qui permet de savoir si on fait un filtre, transfert, synthèse
+float levelweight = 1.; // le poid entre chaque niveau de la pyramide gaussienne
+float K = 5.; // le poid Keppa qui permet de favoriser la coherence.
 
-int L = 1;
-int neighborSize = 5;
-int sum = 0;
-int colorTransfert = 0;
-int bestmatch = 1;
-int patchmatch = 0;
-int nbMaxIter = 3;
-float w = 1.;
-float levelweight = 1.;
-float K = 5.;
-
+/* mosaïque de A, A', B, B' */
 void
 summarize(pnm A, pnm Aprim, pnm B, pnm Bprim)
 {
@@ -83,6 +87,7 @@ summarize(pnm A, pnm Aprim, pnm B, pnm Bprim)
   pnm_free(out);
 }
 
+/* main du programme */
 void
 process(char* A_name, char* Aprim_name, char* B_name)
 {
@@ -120,9 +125,26 @@ process(char* A_name, char* Aprim_name, char* B_name)
   float* sf_yiq = convertRGB2YIQ(srcW, srcH, tmp_sf);
   float* t_yiq = convertRGB2YIQ(dstW, dstH, tmp_t);
 
-  float* data_source = channel(srcW, srcH, s_yiq, 0);
-  float* data_source_filter = channel(srcW, srcH, sf_yiq, 0);
-  float* data_target = channel(dstW, dstH, t_yiq, 0);
+  float* data_source, *data_source_filter, *data_target;
+
+  if( !lumRemap ){
+    data_source = channel(srcW, srcH, s_yiq, 0);
+    data_source_filter = channel(srcW, srcH, sf_yiq, 0);
+    data_target = channel(dstW, dstH, t_yiq, 0);
+  }
+  else{
+    printf("Luminance Remapping\n");
+
+    float* tmpA = channel(srcW, srcH, s_yiq, 0);
+    float* tmpAprim = channel(srcW, srcH, sf_yiq, 0);
+    data_target = channel(dstW, dstH, t_yiq, 0);
+
+    data_source = luminanceRemapping(srcW, srcH, tmpA, dstW, dstH, data_target);
+    data_source_filter = luminanceRemapping(srcW, srcH, tmpAprim, dstW, dstH, data_target);
+
+    free(tmpA);
+    free(tmpAprim);
+  }
 
   printf("Création des pyramides A A\' B B\' \n");
 
@@ -179,7 +201,7 @@ process(char* A_name, char* Aprim_name, char* B_name)
         for(int j=0; j<dstW; j++){
           q = i*dstW+j;
 
-          p = BestMatch(A, Aprim, i, j, B, Bprim, l, neighborSize, w, levelweight, L, K, kernel);
+          p = BestMatch(A, Aprim, i, j, B, Bprim, l, neighborSize, w, levelweight, L, K, onePixel, kernel);
 
           /*
           if(w == 1)
@@ -219,15 +241,15 @@ process(char* A_name, char* Aprim_name, char* B_name)
           for(int j=jstart; j!=jend; j+=step){
             q = i*dstW+j;
 
-            p_patchmatch = patchMatch(A, Aprim, i, j, B, Bprim, l, neighborSize, w, levelweight, kernel, Bprim[l].s, k);
+            p_patchmatch = patchMatch(A, Aprim, i, j, B, Bprim, l, neighborSize, w, levelweight, onePixel, kernel, Bprim[l].s, k);
             x = p_patchmatch/A[l].cols;
             y = p_patchmatch - x * A[l].cols;
-            dist_patch = dist(x, y, A, Aprim, i, j, B, Bprim, l, neighborSize, w, levelweight, kernel);
+            dist_patch = dist(x, y, A, Aprim, i, j, B, Bprim, l, neighborSize, w, levelweight, onePixel, kernel);
 
-            p_coh = Ashikhmin(A, Aprim, i, j, B, Bprim, l, neighborSize, w, levelweight, kernel);
+            p_coh = Ashikhmin(A, Aprim, i, j, B, Bprim, l, neighborSize, w, levelweight, onePixel, kernel);
             x = p_coh/A[l].cols;
             y = p_coh - x * A[l].cols;
-            dist_coh = dist(x, y, A, Aprim, i, j, B, Bprim, l, neighborSize, w, levelweight, kernel);
+            dist_coh = dist(x, y, A, Aprim, i, j, B, Bprim, l, neighborSize, w, levelweight, onePixel, kernel);
 
             if(dist_coh < dist_patch * (1 + powf(2, l-L)*K) )
               p = p_coh;
@@ -344,6 +366,10 @@ Usage(char* command)
   printf("\t\t-ns/--neighborSize: Taille du patch au niveau l\n");
   printf("\t\t-l/--levelPyramid: Taille de la pyramide gaussienne\n");
   printf("\t\t-k/--keppa : poid favorisant la coherence\n");
+  printf("\t\t-lr/--luminanceRemapping: effectue un précalcule sur la luminance\n");
+  printf("\t\t\tA utilisé lorsque A est beacoup plus clair que B ou inversement\n");
+  printf("\t\t-one/--onePixelSource: prend que le pixel centrale lors du calcule de distance entre A et B\n");
+  printf("\t\t\tA utilisé que lorsque vous effectuez un transfert\n");
   printf("\t\t-sum/--sumarize: créer une image mosaïque de A A\' B B\'\n");
   printf("\t\t-ct/--colortransfert: force le transfert de couleur de A\' vers B\'\n");
   printf("\t\t-pm/--patchMatch: Utilisation de patchMatch et Ashikhmin comme méthode de recherche\n");
@@ -354,6 +380,7 @@ Usage(char* command)
   exit(EXIT_FAILURE);
 }
 
+/*Gestion des arguments*/
 int
 main(int argc, char** argv)
 {
@@ -375,16 +402,35 @@ main(int argc, char** argv)
       else if(!strcmp(argv[k], "-ns") || !strcmp(argv[k], "--neighborSize")){
         k++;
         neighborSize = atoi(argv[k]);
+        if(neighborSize%2==0)
+          neighborSize++;
+        if(neighborSize < 0)
+          Usage(argv[0]);
       }
 
       else if(!strcmp(argv[k], "-l") || !strcmp(argv[k], "--levelPyramid")){
         k++;
         L = atoi(argv[k]);
+        if( L <= 0)
+          Usage(argv[0]);
       }
 
       else if(!strcmp(argv[k], "-k") || !strcmp(argv[k], "--keppa")){
         k++;
         K = atof(argv[k]);
+        if(k < 0)
+          k = 0;
+      }
+
+      else if(!strcmp(argv[k], "-one") || !strcmp(argv[k], "--onePixelSource")){
+        if(w > 0 && w < 1)
+          onePixel = 1;
+        else
+          Usage(argv[0]);
+      }
+
+      else if(!strcmp(argv[k], "-lr") || !strcmp(argv[k], "--luminanceRemapping")){
+        lumRemap = 1;
       }
 
       else if(!strcmp(argv[k], "-sum") || !strcmp(argv[k], "--summarize")){
@@ -409,6 +455,8 @@ main(int argc, char** argv)
         if( patchmatch ){
           k++;
           nbMaxIter = atoi(argv[k]);
+          if(nbMaxIter <= 0)
+            nbMaxIter = 1;
         }else{
           fprintf(stderr,"Attention, vous devez choisir la méthode patchMatch pour utiliser cette option\n");
           exit(EXIT_FAILURE);

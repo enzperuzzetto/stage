@@ -65,6 +65,6 @@
  *        q: pixel de B et B'
  **/
 int
-patchMatch( Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, float** kernel, int* nnf, int k);
+patchMatch( Pyramid* A, Pyramid* Aprim, int x, int y, Pyramid* B, Pyramid* Bprim, int l, int size, float W, float levelWeight, int onePixel, float** kernel, int* nnf, int k);
 
 #endif
